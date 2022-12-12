@@ -1,11 +1,11 @@
 # glue-schema-registry
 
-A typescript library to encode and decode messages with AWS Glue schemas and the wire format used by AWS' java libraries for producing and consuming
-messages with MSK, Kafka, Kinesis, etc.
+A typescript library to encode and decode messages with AWS Glue schemas and the wire format that is used by AWS' java libraries for producing and consuming messages with MSK, Kafka, Kinesis, etc.
+This makes it possible to create typescript applications that are compatible with the messages that are created with the AWS Glue Java SerDe libraries.
 
-With this library one can produce and consume Apache Avro encoded messages.
+With this library one can produce and consume Apache Avro encoded messages. Protobof and JSON Schema are currently not supported.
 The library supports gzip compression, schema registration, and schema evolution.
-For avro encoding/decodinv avsc (https://github.com/mtth/avsc) is being used.
+For avro encoding/decoding avsc (https://github.com/mtth/avsc) is being used.
 
 This library works well with kafkajs (https://kafka.js.org).
 
