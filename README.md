@@ -83,7 +83,7 @@ To decode received messages:
         ]
     });
     const dataset = await registry.decode(message.value, schema);
-```
+````
 
 Note: registry.decode expects the raw message as first parameter, plus the target schema as second parameter.
 If the message is encoded with a different version of the schema, the encoding schema gets loaded from Glue.
