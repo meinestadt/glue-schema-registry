@@ -1,0 +1,45 @@
+{
+  "name": "@meinestadt.de/glue-schema-registry",
+  "version": "0.0.1",
+  "description": "A library for encoding/decoding messages with schemas stored in AWS Glue Schema Registry",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src/*.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meinestadt/glue-schema-registry.git"
+  },
+  "keywords": [
+    "glue",
+    "MSK",
+    "Kafka",
+    "schema",
+    "registry",
+    "avro"
+  ],
+  "author": "Meinestadt GmbH",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/meinestadt/glue-schema-registry/issues"
+  },
+  "homepage": "https://github.com/meinestadt/glue-schema-registry#readme",
+  "devDependencies": {
+    "@types/node": "^18.11.13",
+    "@types/uuid": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.46.0",
+    "eslint": "^8.29.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.1",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "avsc": "^5.7.7",
+    "aws-sdk": "^2.1272.0",
+    "uuid": "^9.0.0",
+    "zlib": "^1.0.5"
+  }
+}
