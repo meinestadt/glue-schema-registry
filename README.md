@@ -39,12 +39,17 @@ const registry = new msglue.GlueSchemaRegistry<SCHEMATYPE>("<GLUE REGISTRY NAME>
 });
 
 // create a new schema
-const schemaId = await registry.createSchema({
-    type: SchemaType.AVRO,
-    schemaName: "Testschema",
-    compatibility: SchemaCompatibilityType.BACKWARD,
-    schema: JSON.stringify(schema),
-});
+// throws an error if the schema already exists
+try {
+    const schemaId = await registry.createSchema({
+        type: SchemaType.AVRO,
+        schemaName: "Testschema",
+        compatibility: SchemaCompatibilityType.BACKWARD,
+        schema: JSON.stringify(schema),
+    });
+} catch (error) {
+    ...
+}
 
 // or register a version of an existing schema
 // creates a new version or returns the id of an existing one, if a similar version already exists
@@ -91,5 +96,87 @@ If the message is encoded with a different version of the schema, the encoding s
 The record is then converted to the target schema.
 If the schemas are not compatible an exception is thrown.
 
+## Advanced
+
+### Type parameter
+
+You can set the type of the object that you want to encode, and that you receive when you decode a message, as type parameter when you create the instance.
+
+For example:
+````typescript
+interface Address {
+  street: string;
+  zip: string;
+  city: string;
+}
+
+const registry = new msglue.GlueSchemaRegistry<Address>("<GLUE REGISTRY NAME>", {
+    region: "<AWS_REGION>",
+});
+````
+
+The constructor takes an sdk.Glue.ClientConfiguration object as optional parameter.
+
+### Create a new schema
+
+Creates a new schema in the glue schema registry.
+Throws an error if the schema already exists.
+
+````typescript
+registry.createSchema({
+    type: SchemaType // currently only SchemaType.AVRO
+    schemaName: string
+    compatibility: SchemaCompatibilityType // NONE, BACKWARD, BACKWARD_ALL, DISABLED, FORWARD, FORWARD_ALL, FULL, FULL_ALL
+    schema: string // the schema as JSON string
+})
+````
+
+### Register a schema
+
+Registers a schema and makes it available for encoding/decoding.
+Creates a new version if the schema does not exist yet.
+Throws an exception if the Glue compatibility check fails. 
+Schemas are cached so that subsequent calls of `register` do not lead to multiple AWS Glue calls.
+
+````typescript
+const schemaId = await registry.register({
+    schemaName: string,
+    type: SchemaType,  // currently only SchemaType.AVRO
+    schema: string, // schemas as JSON string
+});
+````
+
+
+### Encode an object
+
+Encode the object with a given glueSchemaId and returns a Buffer containing the binary data.
+
+````typescript
+async encode(glueSchemaId: string, object: T, props?: EncodeProps): Promise<Buffer>
+````
+
+Optional properties:
+
+````typescript
+{
+  compress: boolean // default: true
+}
+````
+
+
+### Decode an object
+
+Decodes the binary message with the passed avro schema.
+Reads the ID of the producer schema from the message, and loads the schema from the Glue
+schema registry. Caches schemas for subsequent use.
+Converts the incoming message from the producers schema into the consumers schema.
+Throws an error if the producer schema does not exist, or cannot be loaded from glue, or
+if producer and consumer schema are not compatible.
+
+Decodes both uncompressed and gzip compressed messages.
+
+````typescript
+async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
+````
 
 

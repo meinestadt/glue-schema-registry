@@ -17,6 +17,10 @@ export enum SchemaCompatibilityType {
   BACKWARD = 'BACKWARD',
   BACKWARD_ALL = 'BACKWARD_ALL',
   DISABLED = 'DISABLED',
+  FORWARD = 'FORWARD',
+  FORWARD_ALL = 'FORWARD_ALL',
+  FULL = 'FULL',
+  FULL_ALL = 'FULL_ALL',
 }
 export interface CreateSchemaProps {
   type: SchemaType
@@ -57,37 +61,24 @@ export class GlueSchemaRegistry<T> {
     return existingschema
   }
 
-  /*
-  Registers a new schema in the AWS Glue Schema Registry.
-  Note: use the method register instead if you just want to register a new version of an existing schema.
-  */
+  /**
+   * Registers a new schema in the AWS Glue Schema Registry.
+   * Note: use the method register instead if you just want to register a new version of an existing schema.
+   * @throws if the schema already exists
+   */
   public async createSchema(props: CreateSchemaProps) {
-    try {
-      const existingschema = await this.gc
-        .getSchema({
-          SchemaId: {
-            RegistryName: this.registryName,
-            SchemaName: props.schemaName,
-          },
-        })
-        .promise()
-      return existingschema.SchemaArn
-    } catch (error) {
-      if ((error as sdk.AWSError).statusCode == 400) {
-        const res = await this.gc
-          .createSchema({
-            DataFormat: props.type,
-            Compatibility: props.compatibility,
-            SchemaName: props.schemaName,
-            SchemaDefinition: props.schema,
-            RegistryId: {
-              RegistryName: this.registryName,
-            },
-          })
-          .promise()
-        return res.SchemaVersionId
-      } else throw error
-    }
+    const res = await this.gc
+      .createSchema({
+        DataFormat: props.type,
+        Compatibility: props.compatibility,
+        SchemaName: props.schemaName,
+        SchemaDefinition: props.schema,
+        RegistryId: {
+          RegistryName: this.registryName,
+        },
+      })
+      .promise()
+    return res.SchemaVersionId
   }
 
   /**
