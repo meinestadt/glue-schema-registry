@@ -35,6 +35,11 @@ export declare class GlueSchemaRegistry<T> {
     private avroSchemaCache;
     constructor(registryName: string, props?: sdk.Glue.ClientConfiguration);
     private loadGlueSchema;
+    /**
+     * Registers a new schema in the AWS Glue Schema Registry.
+     * Note: use the method register instead if you just want to register a new version of an existing schema.
+     * @throws if the schema already exists
+     */
     createSchema(props: CreateSchemaProps): Promise<string | undefined>;
     /**
      * Registers a new version of an existing schema.

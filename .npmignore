@@ -2,3 +2,5 @@
 .prettierrc.js
 .eslintrc.js
 tsconfig.json
+*.ts
+!*.d.ts
