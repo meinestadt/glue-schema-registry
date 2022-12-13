@@ -2,7 +2,7 @@
 
 A Typescript library for encoding and decoding messages with AWS Glue schemas and the wire format used by the AWS Java libraries to create and consume messages with MSK, Kafka, Kinesis, and so on. This enables the creation of Typescript applications that are compatible with messages created with the AWS Glue Java SerDe libraries.
 
-Apache Avro-encoded messages can be created and consumed using this library. Protobof and JSON Schema are not currently supported. The library supports gzip compression, schema registration, and schema evolution. Avsc (https://github.com/mtth/avsc) is used for avro encoding/decoding.
+Apache Avro-encoded messages can be created and consumed using this library. Protobuf and JSON Schema are not currently supported. The library supports gzip compression, schema registration, and schema evolution. Avsc (https://github.com/mtth/avsc) is used for avro encoding/decoding.
 
 This library works well with kafkajs (https://kafka.js.org).
 
