@@ -13,7 +13,11 @@ export declare enum SchemaCompatibilityType {
     NONE = "NONE",
     BACKWARD = "BACKWARD",
     BACKWARD_ALL = "BACKWARD_ALL",
-    DISABLED = "DISABLED"
+    DISABLED = "DISABLED",
+    FORWARD = "FORWARD",
+    FORWARD_ALL = "FORWARD_ALL",
+    FULL = "FULL",
+    FULL_ALL = "FULL_ALL"
 }
 export interface CreateSchemaProps {
     type: SchemaType;
