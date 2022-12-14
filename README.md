@@ -180,3 +180,17 @@ async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
 ````
 
 
+## Protocol details
+
+@meinestadt.de/glue-schema-registry uses the same simple wire protocol as AWS' java libraries (https://github.com/awslabs/aws-glue-schema-registry).
+The protocol is defined as follows:
+
+VERSION_HEADER (1 Byte) + COMPRESSION_BYTE (1 Byte) + SCHEMA_VERSION_ID (16 Byte) + CONTENT
+
+The current supported version is 3. Compression can be 0 (no compression) or 5 (zlib compression).
+
+## Future plans
+
+- support for Protobuf
+- support for JSON Schema
+
