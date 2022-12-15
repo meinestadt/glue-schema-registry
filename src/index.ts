@@ -31,12 +31,13 @@ export interface CreateSchemaProps {
 export interface EncodeProps {
   compress: boolean
 }
-/*
+
+export class GlueSchemaRegistry<T> {
+  /*
   This class aims to be compatible with the java serde implementation from AWS.
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/serializer-deserializer/src/main/java/com/amazonaws/services/schemaregistry/serializers/SerializationDataEncoder.java
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/common/src/main/java/com/amazonaws/services/schemaregistry/utils/AWSSchemaRegistryConstants.java
-*/
-export class GlueSchemaRegistry<T> {
+  */
   private gc: sdk.Glue
   registryName: string
   private glueSchemaIdCache: {
@@ -45,6 +46,13 @@ export class GlueSchemaRegistry<T> {
   private avroSchemaCache: {
     [key: string]: avro.Type
   }
+
+  /**
+   * Constructs a GlueSchemaRegistry
+   *
+   * @param registryName - name of the Glue registry you want to use
+   * @param props - optional AWS properties that are used when constructing the Glue object from the AWS SDK
+   */
   constructor(registryName: string, props?: sdk.Glue.ClientConfiguration) {
     this.gc = new sdk.Glue(props)
     this.registryName = registryName
@@ -62,8 +70,11 @@ export class GlueSchemaRegistry<T> {
   }
 
   /**
-   * Registers a new schema in the AWS Glue Schema Registry.
-   * Note: use the method register instead if you just want to register a new version of an existing schema.
+   * Creates a new schema in the AWS Glue Schema Registry.
+   * Note: do not use createSchema if you want to create a new version of an existing schema.
+   * Instead use register().
+   *
+   * @param props - the details about the schema
    * @throws if the schema already exists
    */
   public async createSchema(props: CreateSchemaProps) {
@@ -85,7 +96,9 @@ export class GlueSchemaRegistry<T> {
    * Registers a new version of an existing schema.
    * Returns the id of the existing schema version if a similar version already exists.
    * Throws an exception if the schema does not exist.
+   * Throws an exception if the Glue compatibility check fails.
    *
+   * @param props - the details about the schema
    * @returns {string} the id of the schema version.
    */
   async register(props: RegisterSchemaProps): Promise<string> {
@@ -126,7 +139,12 @@ export class GlueSchemaRegistry<T> {
   )
 
   /**
-   * Encode the object with the glue schema with the given id
+   * Encode the object with a specific glue schema version
+   *
+   * @param glueSchemaId - UUID of the Glue schema version that should be used to encode the message
+   * @param object - the object to encode
+   * @param props - optional encoding options
+   * @returns - a Buffer containing the binary message
    */
   async encode(glueSchemaId: string, object: T, props?: EncodeProps) {
     const ZLIB_COMPRESS_FUNC = (buf: Buffer) => zlib.deflateSync(buf)
@@ -151,6 +169,10 @@ export class GlueSchemaRegistry<T> {
 
   /**
    * Decode a message with a specific schema.
+   *
+   * @param message - Buffer with the binary encoded message
+   * @param consumerschema - The Avro schema that should be used to decode the message
+   * @returns - the deserialized message as object
    */
   async decode(message: Buffer, consumerschema: avro.Type): Promise<T> {
     const headerversion = message.readInt8(0)
