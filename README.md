@@ -179,6 +179,62 @@ Decodes both uncompressed and gzip compressed messages.
 async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
 ````
 
+## Examples
+
+### Nodejs Lambda function consuming a MSK/Kafka stream
+
+The following lambda function consumes messages from Kafka/MSK, and prints the deserialized 
+object to the console.
+Incoming messages must be encoded with a compatible Avro schema.
+
+````typescript
+import * as avro from "avsc";
+import { GlueSchemaRegistry } from "@meinestadt.de/glue-schema-registry";
+
+// define the interface for the deserialized message
+interface IHelloWorld {
+  message: string;
+}
+
+// the avro schema
+const schema = avro.Type.forSchema({
+  type: "record",
+  namespace: "de.meinestadt.glueschema.demo",
+  name: "HelloWorld",
+  fields: [
+    {
+      name: "message",
+      type: "string",
+      default: "",
+    },
+  ],
+});
+
+export const handler = async (event: any) => {
+  // create the registry object
+  // Note: the lambda function must have the permission to read schemas and
+  // schema versions from AWS Glue
+  const registry = new GlueSchemaRegistry<IHelloWorld>("MySchemas", {
+    region: "eu-central-1",
+  });
+  // Iterate through keys
+  for (let key in event.records) {
+    console.log("Key: ", key);
+    // Iterate through records
+    const p = event.records[key].map((record: any) => {
+        console.log(`Message key: ${record.key}`);
+      // base64 decode the incoming message
+      const msg = Buffer.from(record.value, "base64");
+      // decode the avro encoded message
+      return registry.decode(msg, schema).then((dataset) => {
+        // print the deserialized object to the console
+        console.log(dataset);
+      });
+    });
+    await Promise.all(p);
+  }
+};
+`````
 
 ## Protocol details
 
