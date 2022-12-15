@@ -179,4 +179,74 @@ Decodes both uncompressed and gzip compressed messages.
 async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
 ````
 
+## Examples
+
+### Nodejs Lambda function consuming a MSK/Kafka stream
+
+The following lambda function consumes messages from Kafka/MSK, and prints the deserialized 
+object to the console.
+Incoming messages must be encoded with a compatible Avro schema.
+
+````typescript
+import * as avro from "avsc";
+import { GlueSchemaRegistry } from "@meinestadt.de/glue-schema-registry";
+
+// define the interface for the deserialized message
+interface IHelloWorld {
+  message: string;
+}
+
+// the avro schema
+const schema = avro.Type.forSchema({
+  type: "record",
+  namespace: "de.meinestadt.glueschema.demo",
+  name: "HelloWorld",
+  fields: [
+    {
+      name: "message",
+      type: "string",
+      default: "",
+    },
+  ],
+});
+
+export const handler = async (event: any) => {
+  // create the registry object
+  // Note: the lambda function must have the permission to read schemas and
+  // schema versions from AWS Glue
+  const registry = new GlueSchemaRegistry<IHelloWorld>("MySchemas", {
+    region: "eu-central-1",
+  });
+  // Iterate through keys
+  for (let key in event.records) {
+    console.log("Key: ", key);
+    // Iterate through records
+    const p = event.records[key].map((record: any) => {
+        console.log(`Message key: ${record.key}`);
+      // base64 decode the incoming message
+      const msg = Buffer.from(record.value, "base64");
+      // decode the avro encoded message
+      return registry.decode(msg, schema).then((dataset) => {
+        // print the deserialized object to the console
+        console.log(dataset);
+      });
+    });
+    await Promise.all(p);
+  }
+};
+`````
+
+## Protocol details
+
+@meinestadt.de/glue-schema-registry uses the same simple wire protocol as AWS' java libraries (https://github.com/awslabs/aws-glue-schema-registry).
+The protocol is defined as follows:
+
+VERSION_HEADER (1 Byte) + COMPRESSION_BYTE (1 Byte) + SCHEMA_VERSION_ID (16 Byte) + CONTENT
+
+The current supported version is 3. Compression can be 0 (no compression) or 5 (zlib compression).
+
+## Future plans
+
+- support for Protobuf
+- support for JSON Schema
 
