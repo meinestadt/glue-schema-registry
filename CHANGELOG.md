@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/meinestadt/glue-schema-registry/compare/v0.3.2...v0.3.3) (2022-12-15)
+
+
+### Bug Fixes
+
+* **ci:** merged release-please and npm publish pipeline ([80fad62](https://github.com/meinestadt/glue-schema-registry/commit/80fad621561e2de3bc43d2062768ef2534c9e379))
+
 ## [0.3.2](https://github.com/meinestadt/glue-schema-registry/compare/v0.3.1...v0.3.2) (2022-12-15)
 
 
