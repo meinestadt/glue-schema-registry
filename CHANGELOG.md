@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/meinestadt/glue-schema-registry/compare/v0.3.0...v0.3.1) (2022-12-15)
+
+
+### Bug Fixes
+
+* **ci:** changed release trigger to "published" ([96bea30](https://github.com/meinestadt/glue-schema-registry/commit/96bea302ac29a0a246fb8177df0d9e2f69ceece6))
+
 ## [0.3.0](https://github.com/meinestadt/glue-schema-registry/compare/v0.2.0...v0.3.0) (2022-12-15)
 
 
