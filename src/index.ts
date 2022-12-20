@@ -60,6 +60,15 @@ export class GlueSchemaRegistry<T> {
     this.avroSchemaCache = {}
   }
 
+  /**
+   * Updates the Glue client. Useful if you need to update the credentials, for example.
+   *
+   * @param props settings for the AWS Glue client
+   */
+  public updateGlueClient(props?: sdk.Glue.ClientConfiguration) {
+    this.gc = new sdk.Glue(props)
+  }
+
   private async loadGlueSchema(schemaId: string) {
     const existingschema = await this.gc
       .getSchemaVersion({
