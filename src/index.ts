@@ -39,7 +39,7 @@ export class GlueSchemaRegistry<T> {
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/common/src/main/java/com/amazonaws/services/schemaregistry/utils/AWSSchemaRegistryConstants.java
   */
   private gc: sdk.Glue
-  registryName: string
+  public readonly registryName: string
   private glueSchemaIdCache: {
     [hash: string]: string
   }
@@ -58,6 +58,15 @@ export class GlueSchemaRegistry<T> {
     this.registryName = registryName
     this.glueSchemaIdCache = {}
     this.avroSchemaCache = {}
+  }
+
+  /**
+   * Updates the Glue client. Useful if you need to update the credentials, for example.
+   *
+   * @param props settings for the AWS Glue client
+   */
+  public updateGlueClient(props?: sdk.Glue.ClientConfiguration) {
+    this.gc = new sdk.Glue(props)
   }
 
   private async loadGlueSchema(schemaId: string) {

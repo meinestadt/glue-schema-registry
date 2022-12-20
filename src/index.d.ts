@@ -30,14 +30,29 @@ export interface EncodeProps {
 }
 export declare class GlueSchemaRegistry<T> {
     private gc;
-    registryName: string;
+    readonly registryName: string;
     private glueSchemaIdCache;
     private avroSchemaCache;
+    /**
+     * Constructs a GlueSchemaRegistry
+     *
+     * @param registryName - name of the Glue registry you want to use
+     * @param props - optional AWS properties that are used when constructing the Glue object from the AWS SDK
+     */
     constructor(registryName: string, props?: sdk.Glue.ClientConfiguration);
+    /**
+     * Updates the Glue client. Useful if you need to update the credentials, for example.
+     *
+     * @param props settings for the AWS Glue client
+     */
+    updateGlueClient(props?: sdk.Glue.ClientConfiguration): void;
     private loadGlueSchema;
     /**
-     * Registers a new schema in the AWS Glue Schema Registry.
-     * Note: use the method register instead if you just want to register a new version of an existing schema.
+     * Creates a new schema in the AWS Glue Schema Registry.
+     * Note: do not use createSchema if you want to create a new version of an existing schema.
+     * Instead use register().
+     *
+     * @param props - the details about the schema
      * @throws if the schema already exists
      */
     createSchema(props: CreateSchemaProps): Promise<string | undefined>;
@@ -45,7 +60,9 @@ export declare class GlueSchemaRegistry<T> {
      * Registers a new version of an existing schema.
      * Returns the id of the existing schema version if a similar version already exists.
      * Throws an exception if the schema does not exist.
+     * Throws an exception if the Glue compatibility check fails.
      *
+     * @param props - the details about the schema
      * @returns {string} the id of the schema version.
      */
     register(props: RegisterSchemaProps): Promise<string>;
@@ -56,11 +73,20 @@ export declare class GlueSchemaRegistry<T> {
     private static COMPRESSION_DEFAULT_BYTE;
     private static COMPRESSION_ZLIB_BYTE;
     /**
-     * Encode the object with the glue schema with the given id
+     * Encode the object with a specific glue schema version
+     *
+     * @param glueSchemaId - UUID of the Glue schema version that should be used to encode the message
+     * @param object - the object to encode
+     * @param props - optional encoding options
+     * @returns - a Buffer containing the binary message
      */
     encode(glueSchemaId: string, object: T, props?: EncodeProps): Promise<Buffer>;
     /**
      * Decode a message with a specific schema.
+     *
+     * @param message - Buffer with the binary encoded message
+     * @param consumerschema - The Avro schema that should be used to decode the message
+     * @returns - the deserialized message as object
      */
     decode(message: Buffer, consumerschema: avro.Type): Promise<T>;
     private getAvroSchemaForGlueId;

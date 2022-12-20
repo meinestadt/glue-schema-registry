@@ -179,6 +179,15 @@ Decodes both uncompressed and gzip compressed messages.
 async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
 ````
 
+### Update the Glue client
+
+You can refresh the internally cached Glue client by calling `updateGlueClient`.
+This is particulary useful when credentials need to get updated.
+
+```typescript
+updateGlueClient(props?: sdk.Glue.ClientConfiguration)
+````
+
 ## Examples
 
 ### Nodejs Lambda function consuming a MSK/Kafka stream
