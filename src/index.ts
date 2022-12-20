@@ -39,7 +39,7 @@ export class GlueSchemaRegistry<T> {
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/common/src/main/java/com/amazonaws/services/schemaregistry/utils/AWSSchemaRegistryConstants.java
   */
   private gc: sdk.Glue
-  registryName: string
+  public readonly registryName: string
   private glueSchemaIdCache: {
     [hash: string]: string
   }
