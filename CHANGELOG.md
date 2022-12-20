@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/meinestadt/glue-schema-registry/compare/v0.3.3...v0.4.0) (2022-12-20)
+
+
+### Features
+
+* added possibility to update the Glue client ([f2576db](https://github.com/meinestadt/glue-schema-registry/commit/f2576db4aafc7cf79a386d76788e447ee4ad3b78))
+
+
+### Bug Fixes
+
+* made property registryName readonly ([94d0bcf](https://github.com/meinestadt/glue-schema-registry/commit/94d0bcfea91015d791ec7b39e69917601962b986))
+
 ## [0.3.3](https://github.com/meinestadt/glue-schema-registry/compare/v0.3.2...v0.3.3) (2022-12-15)
 
 
