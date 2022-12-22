@@ -1,6 +1,6 @@
 {
   "name": "@meinestadt.de/glue-schema-registry",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "A library for encoding/decoding messages with schemas stored in AWS Glue Schema Registry",
   "main": "src/index.js",
   "scripts": {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/meinestadt/glue-schema-registry/compare/v0.4.0...v0.4.1) (2022-12-22)
+
+
+### Bug Fixes
+
+* configured dependabot to use prefixes for commit messages ([4f99e3c](https://github.com/meinestadt/glue-schema-registry/commit/4f99e3c86c1b74149548b805d638997ea7708e28))
+
 ## [0.4.0](https://github.com/meinestadt/glue-schema-registry/compare/v0.3.3...v0.4.0) (2022-12-20)
 
 
