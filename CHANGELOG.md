@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/meinestadt/glue-schema-registry/compare/v0.4.1...v0.4.2) (2022-12-24)
+
+
+### Bug Fixes
+
+* **deps:** bump aws-sdk from 2.1280.0 to 2.1281.0 ([39463a8](https://github.com/meinestadt/glue-schema-registry/commit/39463a8671fb77003c7e3d389192505c621ef562))
+
 ## [0.4.1](https://github.com/meinestadt/glue-schema-registry/compare/v0.4.0...v0.4.1) (2022-12-22)
 
 
