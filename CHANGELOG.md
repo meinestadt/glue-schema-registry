@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.0.1...v1.1.0) (2022-12-27)
+
+
+### Features
+
+* support for node12 ([f7476b3](https://github.com/meinestadt/glue-schema-registry/commit/f7476b3a656f234a13b971f0e4f0098de877f2ed))
+
 ## [1.0.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.0.0...v1.0.1) (2022-12-27)
 
 
