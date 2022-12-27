@@ -16,5 +16,15 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
       - run: npm ci      
       - run: npm run build
-      - run: npm run test      
-        
+      - run: npm run test 
+      - name: Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: "coverage/**/clover.xml"
+        if: always()
+      - name: Upload test summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-summary
+          path: test-summary.md
+        if: always()     
