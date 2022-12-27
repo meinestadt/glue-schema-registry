@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/meinestadt/glue-schema-registry/compare/v0.4.2...v0.5.0) (2022-12-27)
+
+
+### Features
+
+* added unit tests ([8006897](https://github.com/meinestadt/glue-schema-registry/commit/80068971447fb108b25360b2424ddd82136b4f1a))
+
+
+### Bug Fixes
+
+* changed name of build and test pipeline ([a061445](https://github.com/meinestadt/glue-schema-registry/commit/a061445a00e852a7b33382a2c7ebf493ada77943))
+* encode did not create uncompressed messages when the compress flag was false ([af273fb](https://github.com/meinestadt/glue-schema-registry/commit/af273fb028bdad3b22f8d654eedc1f02b709d6da))
+
 ## [0.4.2](https://github.com/meinestadt/glue-schema-registry/compare/v0.4.1...v0.4.2) (2022-12-24)
 
 
