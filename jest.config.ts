@@ -12,6 +12,7 @@ const config: Config = {
       statements: -10,
     },
   },
+  reporters: ['default', 'jest-junit'],
 }
 
 export default config
