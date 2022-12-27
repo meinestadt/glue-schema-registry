@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.1.0...v1.1.1) (2022-12-27)
+
+
+### Bug Fixes
+
+* removed junit.xml from deployment ([911743f](https://github.com/meinestadt/glue-schema-registry/commit/911743f43e25a09daa1614b658953d042b835028))
+
 ## [1.1.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.0.1...v1.1.0) (2022-12-27)
 
 
