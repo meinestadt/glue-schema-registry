@@ -9,8 +9,8 @@ lerna-debug.log*
 # Javascript files
 src/*.js
 src/*.d.ts
-test/*.js
-test/*.d.ts
+test/**/*.js
+test/**/*.d.ts
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
