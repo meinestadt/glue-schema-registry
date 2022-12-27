@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/meinestadt/glue-schema-registry/compare/v0.5.0...v1.0.0) (2022-12-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* first major release
+
+### Features
+
+* first major release ([5ef9128](https://github.com/meinestadt/glue-schema-registry/commit/5ef9128bf60327b2076aa187d3ed3bdc935ea58e))
+
 ## [0.5.0](https://github.com/meinestadt/glue-schema-registry/compare/v0.4.2...v0.5.0) (2022-12-27)
 
 
