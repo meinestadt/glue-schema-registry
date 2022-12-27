@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.0.0...v1.0.1) (2022-12-27)
+
+
+### Bug Fixes
+
+* exclude test and coverage folders from deployment ([05fa1f6](https://github.com/meinestadt/glue-schema-registry/commit/05fa1f6bd099cbe6e341dc8bdf36746cdb780449))
+
 ## [1.0.0](https://github.com/meinestadt/glue-schema-registry/compare/v0.5.0...v1.0.0) (2022-12-27)
 
 
