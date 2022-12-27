@@ -163,7 +163,7 @@ export class GlueSchemaRegistry<T> {
     const buf = schema.toBuffer(object)
     let compression_func = ZLIB_COMPRESS_FUNC
     let compressionbyte = GlueSchemaRegistry.COMPRESSION_ZLIB_BYTE
-    if (props?.compress) {
+    if (props && props?.compress === false) {
       compression_func = NO_COMPRESS_FUNC
       compressionbyte = GlueSchemaRegistry.COMPRESSION_DEFAULT_BYTE
     }
