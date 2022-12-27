@@ -1,6 +1,9 @@
 import { jest } from '@jest/globals'
 import * as avro from 'avsc'
 
+/**
+ * Singleton providing a mock of the AWS SDK with some Glue functions.
+ */
 export default class SDKMock {
   private static instance: SDKMock
   private testschema = avro.Type.forSchema({
@@ -43,6 +46,9 @@ export default class SDKMock {
     })
     .mockName('createSchema')
 
+  /**
+   * Calls mockClear on all mocked functions.
+   */
   public clear() {
     this.mockedGetSchemaVersion.mockClear()
     this.mockedRegisterSchemaVersion.mockClear()
@@ -63,6 +69,9 @@ export default class SDKMock {
     })
   }
 
+  /**
+   * @returns the instance of the SDKMock class
+   */
   public static getInstance() {
     if (!SDKMock.instance) SDKMock.instance = new SDKMock()
     return SDKMock.instance
