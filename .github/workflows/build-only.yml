@@ -20,7 +20,8 @@ jobs:
       - name: Test Summary
         uses: test-summary/action@v2
         with:
-          paths: "junit.xml"
+          paths: "**/junit.xml"
+          output: "test-summary.md"
         if: always()
       - name: Upload test summary
         uses: actions/upload-artifact@v3

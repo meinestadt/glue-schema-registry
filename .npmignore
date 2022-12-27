@@ -6,3 +6,4 @@ tsconfig.json
 !*.d.ts
 test
 coverage
+junit.xml
