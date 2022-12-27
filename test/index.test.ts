@@ -1,5 +1,5 @@
-import SDKMock from './sdkmock'
-import { describe, expect, test, jest, beforeAll } from '@jest/globals'
+import SDKMock from './helper/sdkmock'
+import { describe, expect, test, beforeAll } from '@jest/globals'
 import { GlueSchemaRegistry, SchemaCompatibilityType, SchemaType } from '../src'
 import * as avro from 'avsc'
 
@@ -31,13 +31,17 @@ const testschemaV2 = avro.Type.forSchema({
 
 const sdkmock = SDKMock.getInstance()
 
+// valid message with gzip compressed content
 const compressedHelloWorld =
   '0305b7912285527d42de88eee389a763225f789c93f048cdc9c95728cf2fca495104001e420476'
 
+// valid message with uncompressed content
 const uncompressedHelloWorld = '0300b7912285527d42de88eee389a763225f1848656c6c6f20776f726c6421'
 
+// message with wrong magic byte
 const malformedMessage = '0000b7912285527d42de88eee389a763225f1848656c6c6f20776f726c6421'
 
+// message with wrong compression byte
 const malformedCompression = '0301b7912285527d42de88eee389a763225f1848656c6c6f20776f726c6421'
 
 describe('schema management', () => {
