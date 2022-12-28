@@ -1,6 +1,6 @@
 # glue-schema-registry
 
-![Build status](https://github.com/meinestadt/glue-schema-registry/actions/workflows/build-only.yml/badge.svg)
+[![npm](https://img.shields.io/npm/v/@meinestadt.de/glue-schema-registry/latest.svg)](https://www.npmjs.com/package/@meinestadt.de/glue-schema-registry) ![Build status](https://github.com/meinestadt/glue-schema-registry/actions/workflows/build-only.yml/badge.svg)
 
 A Javasript/Typescript library for encoding and decoding messages with AWS Glue schemas and the wire format used by the AWS Java libraries to create and consume messages with MSK, Kafka, Kinesis, and so on. This enables the creation of Typescript applications that are compatible with messages created with the AWS Glue Java SerDe libraries.
 
