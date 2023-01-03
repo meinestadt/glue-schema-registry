@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.1.1...v1.2.0) (2023-01-03)
+
+
+### Features
+
+* smaller performance and code improvements ([cff07c1](https://github.com/meinestadt/glue-schema-registry/commit/cff07c1dd36518706d20da1f5fc8bb8693f03944))
+
+
+### Bug Fixes
+
+* fixed typo in error message ([78c94a3](https://github.com/meinestadt/glue-schema-registry/commit/78c94a3691fc5940d6288791a25d1a72e95cb2ec))
+
 ## [1.1.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.1.0...v1.1.1) (2022-12-27)
 
 
