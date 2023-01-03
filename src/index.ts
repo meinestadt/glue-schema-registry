@@ -196,7 +196,7 @@ export class GlueSchemaRegistry<T> {
       compression !== GlueSchemaRegistry.COMPRESSION_DEFAULT &&
       compression !== GlueSchemaRegistry.COMPRESSION_ZLIB
     ) {
-      throw new Error('Only compression type 0 and 5 are supperted, received ' + compression)
+      throw new Error(`Only compression type 0 and 5 are supported, received ${compression}`)
     }
     const producerSchemaId = uuid.stringify(message, 2)
     const producerschema = await this.getAvroSchemaForGlueId(producerSchemaId)

@@ -177,7 +177,7 @@ describe('test error cases', () => {
       await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      expect(error.message).toMatch('Only compression type 0 and 5 are supperted, received 1')
+      expect(error.message).toMatch('Only compression type 0 and 5 are supported, received 1')
     }
   })
 })
