@@ -163,7 +163,7 @@ export class GlueSchemaRegistry<T> {
     const buf = schema.toBuffer(object)
     let compression_func = ZLIB_COMPRESS_FUNC
     let compressionbyte = GlueSchemaRegistry.COMPRESSION_ZLIB_BYTE
-    if (props && props?.compress === false) {
+    if (props && !props.compress) {
       compression_func = NO_COMPRESS_FUNC
       compressionbyte = GlueSchemaRegistry.COMPRESSION_DEFAULT_BYTE
     }
@@ -186,11 +186,10 @@ export class GlueSchemaRegistry<T> {
   async decode(message: Buffer, consumerschema: avro.Type): Promise<T> {
     const headerversion = message.readInt8(0)
     const compression = message.readInt8(1)
-    const ZLIB_UNCOMPRESS_FUNC = zlib.inflateSync
-    const NO_UNCOMPRESS_FUNC = (buf: Buffer) => buf
-
     if (headerversion !== GlueSchemaRegistry.HEADER_VERSION) {
-      throw new Error('Only header version 3 is supported, received ' + headerversion)
+      throw new Error(
+        `Only header version ${GlueSchemaRegistry.HEADER_VERSION} is supported, received ${headerversion}`,
+      )
     }
     if (
       compression !== GlueSchemaRegistry.COMPRESSION_DEFAULT &&
@@ -198,6 +197,8 @@ export class GlueSchemaRegistry<T> {
     ) {
       throw new Error(`Only compression type 0 and 5 are supported, received ${compression}`)
     }
+    const ZLIB_UNCOMPRESS_FUNC = zlib.inflateSync
+    const NO_UNCOMPRESS_FUNC = (buf: Buffer) => buf
     const producerSchemaId = uuid.stringify(message, 2)
     const producerschema = await this.getAvroSchemaForGlueId(producerSchemaId)
     const resolver = this.getResolver(producerschema, consumerschema)
@@ -210,8 +211,7 @@ export class GlueSchemaRegistry<T> {
   }
 
   private async getAvroSchemaForGlueId(id: string) {
-    const cacheHit = this.avroSchemaCache[id]
-    if (cacheHit) return cacheHit
+    if (this.avroSchemaCache[id]) return this.avroSchemaCache[id]
     const schemastring = (await this.loadGlueSchema(id)).SchemaDefinition
     if (!schemastring) throw new Error('Glue returned undefined schema definition')
     const schema = avro.Type.forSchema(JSON.parse(schemastring))
@@ -220,13 +220,8 @@ export class GlueSchemaRegistry<T> {
   }
 
   private UUIDstringToByteArray(id: string) {
-    const SCHEMA_VERSION_ID_SIZE = 16
     const idasbytes = uuid.parse(id)
-    const a = new Uint8Array(SCHEMA_VERSION_ID_SIZE)
-    for (let x = 0; x < SCHEMA_VERSION_ID_SIZE; x++) {
-      a[x] = idasbytes[x]
-    }
-    return a
+    return new Uint8Array(idasbytes)
   }
 
   private getResolver(producerschema: avro.Type, consumerschema: avro.Type) {
@@ -235,8 +230,6 @@ export class GlueSchemaRegistry<T> {
   }
 
   private static initByteBuffer(value: number) {
-    const buffer = Buffer.alloc(1)
-    buffer.writeInt8(value, 0)
-    return buffer
+    return Buffer.from([value])
   }
 }
