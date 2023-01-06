@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.3.0...v1.3.1) (2023-01-06)
+
+
+### Bug Fixes
+
+* removed unnecessary dependency "remove" ([10214cf](https://github.com/meinestadt/glue-schema-registry/commit/10214cf43f0d0658a6c8fd9830ad391a0f2ea3cc))
+
 ## [1.3.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.2.0...v1.3.0) (2023-01-06)
 
 
