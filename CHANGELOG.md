@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.2.0...v1.3.0) (2023-01-06)
+
+
+### Features
+
+* switched to async zlib functions, fixes [#56](https://github.com/meinestadt/glue-schema-registry/issues/56) ([5a47039](https://github.com/meinestadt/glue-schema-registry/commit/5a47039e23448ec3b1e1a29b5ba38bcc9e6d7e18))
+
 ## [1.2.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.1.1...v1.2.0) (2023-01-03)
 
 
