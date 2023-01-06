@@ -156,8 +156,21 @@ export class GlueSchemaRegistry<T> {
    * @returns - a Buffer containing the binary message
    */
   async encode(glueSchemaId: string, object: T, props?: EncodeProps) {
-    const ZLIB_COMPRESS_FUNC = (buf: Buffer) => zlib.deflateSync(buf)
-    const NO_COMPRESS_FUNC = (buf: Buffer) => buf
+    const ZLIB_COMPRESS_FUNC = (buf: Buffer): Promise<Buffer> => {
+      return new Promise((resolve, reject) => {
+        zlib.deflate(buf, (err, data) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(data)
+          }
+        })
+      })
+    }
+    const NO_COMPRESS_FUNC = (buf: Buffer): Promise<Buffer> =>
+      new Promise((resolve) => {
+        resolve(buf)
+      })
     const schema = await this.getAvroSchemaForGlueId(glueSchemaId)
     // construct the message binary
     const buf = schema.toBuffer(object)
@@ -171,7 +184,7 @@ export class GlueSchemaRegistry<T> {
       GlueSchemaRegistry.HEADER_VERSION_BYTE,
       compressionbyte,
       this.UUIDstringToByteArray(glueSchemaId),
-      compression_func(buf),
+      await compression_func(buf),
     ])
     return output
   }
@@ -197,8 +210,21 @@ export class GlueSchemaRegistry<T> {
     ) {
       throw new Error(`Only compression type 0 and 5 are supported, received ${compression}`)
     }
-    const ZLIB_UNCOMPRESS_FUNC = zlib.inflateSync
-    const NO_UNCOMPRESS_FUNC = (buf: Buffer) => buf
+    const ZLIB_UNCOMPRESS_FUNC = (buf: Buffer): Promise<Buffer> => {
+      return new Promise((resolve, reject) => {
+        zlib.inflate(buf, (err, data) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(data)
+          }
+        })
+      })
+    }
+    const NO_UNCOMPRESS_FUNC = (buf: Buffer): Promise<Buffer> =>
+      new Promise((resolve) => {
+        resolve(buf)
+      })
     const producerSchemaId = uuid.stringify(message, 2)
     const producerschema = await this.getAvroSchemaForGlueId(producerSchemaId)
     const resolver = this.getResolver(producerschema, consumerschema)
@@ -207,7 +233,7 @@ export class GlueSchemaRegistry<T> {
     if (compression === GlueSchemaRegistry.COMPRESSION_ZLIB) {
       handlecompression = ZLIB_UNCOMPRESS_FUNC
     }
-    return consumerschema.fromBuffer(handlecompression(content), resolver)
+    return consumerschema.fromBuffer(await handlecompression(content), resolver)
   }
 
   private async getAvroSchemaForGlueId(id: string) {
