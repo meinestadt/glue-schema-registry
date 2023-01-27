@@ -182,12 +182,52 @@ Decodes both uncompressed and gzip compressed messages.
 async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
 ````
 
+### Get meta data for a message
+
+If you need meta data, such as schema id and glue schema, you can use
+
+````typescript
+async analyzeMessage(message: Buffer): Promise<AnalyzeMessageResult>
+````
+
+to get the meta data for a message, without fully decoding it.
+The result is defined as follows:
+
+````typescript
+export type AnalyzeMessageResult = {
+  /**
+   * true if the message is valid
+   */
+  valid: boolean
+  /**
+   * the error code, if valid is false, otherwise undefined
+   */
+  error?: ERROR
+  /**
+   * the header version
+   */
+  headerversion?: number
+  /**
+   * the compression type, may be 0 (none) or 5 (gzip)
+   */
+  compression?: number
+  /**
+   * the uuid of the schema
+   */
+  schemaId?: string
+  /**
+   * the glue schema
+   */
+  schema?: GetSchemaVersionResponse
+}
+````
+
 ### Update the Glue client
 
 You can refresh the internally cached Glue client by calling `updateGlueClient`.
 This is particulary useful when credentials need to get updated.
 
-```typescript
+````typescript
 updateGlueClient(props?: sdk.Glue.ClientConfiguration)
 ````
 
@@ -246,7 +286,7 @@ export const handler = async (event: any) => {
     await Promise.all(p);
   }
 };
-`````
+```
 
 ## Protocol details
 

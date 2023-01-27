@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import * as sdk from 'aws-sdk';
 import * as avro from 'avsc';
+import { GetSchemaVersionResponse } from 'aws-sdk/clients/glue';
 export declare enum SchemaType {
     AVRO = "AVRO"
 }
@@ -28,6 +29,39 @@ export interface CreateSchemaProps {
 export interface EncodeProps {
     compress: boolean;
 }
+export declare enum ERROR {
+    NO_ERROR = 0,
+    INVALID_HEADER_VERSION = 1,
+    INVALID_COMPRESSION = 2,
+    INVALID_SCHEMA_ID = 3,
+    INVALID_SCHEMA = 4
+}
+export type AnalyzeMessageResult = {
+    /**
+     * true if the message is valid
+     */
+    valid: boolean;
+    /**
+     * the error code, if valid is false, otherwise undefined
+     */
+    error?: ERROR;
+    /**
+     * the header version
+     */
+    headerversion?: number;
+    /**
+     * the compression type, may be 0 (none) or 5 (gzip)
+     */
+    compression?: number;
+    /**
+     * the uuid of the schema
+     */
+    schemaId?: string;
+    /**
+     * the glue schema
+     */
+    schema?: GetSchemaVersionResponse;
+};
 export declare class GlueSchemaRegistry<T> {
     private gc;
     readonly registryName: string;
@@ -81,6 +115,13 @@ export declare class GlueSchemaRegistry<T> {
      * @returns - a Buffer containing the binary message
      */
     encode(glueSchemaId: string, object: T, props?: EncodeProps): Promise<Buffer>;
+    /**
+     * Analyze the binary message to determine if it is valid and if so, what schema version it was encoded with.
+     *
+     * @param message - the binary message to analyze
+     * @returns - an object containing the analysis results @see AnalyzeMessageResult
+     */
+    analyzeMessage(message: Buffer): Promise<AnalyzeMessageResult>;
     /**
      * Decode a message with a specific schema.
      *
