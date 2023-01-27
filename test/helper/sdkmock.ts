@@ -19,6 +19,7 @@ export default class SDKMock {
       promise: () => {
         return {
           SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
+          SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
         }
       },
     })
@@ -30,6 +31,7 @@ export default class SDKMock {
       promise: () => {
         return {
           SchemaDefinition: JSON.stringify(this.testschema),
+          SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
         }
       },
     })
@@ -41,6 +43,7 @@ export default class SDKMock {
       promise: () => {
         return {
           SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225e',
+          SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
         }
       },
     })

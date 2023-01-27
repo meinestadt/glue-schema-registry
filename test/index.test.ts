@@ -1,6 +1,6 @@
 import SDKMock from './helper/sdkmock'
 import { describe, expect, test, beforeAll } from '@jest/globals'
-import { GlueSchemaRegistry, SchemaCompatibilityType, SchemaType } from '../src'
+import { ERROR, GlueSchemaRegistry, SchemaCompatibilityType, SchemaType } from '../src'
 import * as avro from 'avsc'
 
 interface TestType {
@@ -154,6 +154,31 @@ describe('serde without compression', () => {
     // expect that mockRegisterSchemaVersion got called only once, otherwise the cache wouldn't work
     expect(sdkmock.mockedRegisterSchemaVersion).toBeCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
+  })
+})
+
+describe('test analyze message', () => {
+  test('analyze should succeed for a valid message', async () => {
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const result = await schemaregistry.analyzeMessage(Buffer.from(compressedHelloWorld, 'hex'))
+    expect(result.valid).toBe(true)
+    expect(result.compression).toBe(GlueSchemaRegistry.COMPRESSION_ZLIB)
+    expect(result.schemaId).toBe('b7912285-527d-42de-88ee-e389a763225f')
+    expect(result.schema?.SchemaArn).toBe(
+      'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+    )
+  })
+  test('analyze should not succeed for an invalid message', async () => {
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const result = await schemaregistry.analyzeMessage(Buffer.from(malformedMessage, 'hex'))
+    expect(result.valid).toBe(false)
+    expect(result.error).toBe(ERROR.INVALID_HEADER_VERSION)
+  })
+  test('analyze should not succeed for an invalid compression type', async () => {
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const result = await schemaregistry.analyzeMessage(Buffer.from(malformedCompression, 'hex'))
+    expect(result.valid).toBe(false)
+    expect(result.error).toBe(ERROR.INVALID_COMPRESSION)
   })
 })
 

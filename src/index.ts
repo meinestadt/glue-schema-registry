@@ -3,6 +3,7 @@ import * as crypto from 'crypto'
 import * as uuid from 'uuid'
 import * as avro from 'avsc'
 import * as zlib from 'zlib'
+import { GetSchemaVersionResponse } from 'aws-sdk/clients/glue'
 
 export enum SchemaType {
   AVRO = 'AVRO',
@@ -30,6 +31,41 @@ export interface CreateSchemaProps {
 }
 export interface EncodeProps {
   compress: boolean
+}
+
+export enum ERROR {
+  NO_ERROR = 0,
+  INVALID_HEADER_VERSION = 1,
+  INVALID_COMPRESSION = 2,
+  INVALID_SCHEMA_ID = 3,
+  INVALID_SCHEMA = 4,
+}
+
+export type AnalyzeMessageResult = {
+  /**
+   * true if the message is valid
+   */
+  valid: boolean
+  /**
+   * the error code, if valid is false, otherwise undefined
+   */
+  error?: ERROR
+  /**
+   * the header version
+   */
+  headerversion?: number
+  /**
+   * the compression type, may be 0 (none) or 5 (gzip)
+   */
+  compression?: number
+  /**
+   * the uuid of the schema
+   */
+  schemaId?: string
+  /**
+   * the glue schema
+   */
+  schema?: GetSchemaVersionResponse
 }
 
 export class GlueSchemaRegistry<T> {
@@ -187,6 +223,56 @@ export class GlueSchemaRegistry<T> {
       await compression_func(buf),
     ])
     return output
+  }
+
+  /**
+   * Analyze the binary message to determine if it is valid and if so, what schema version it was encoded with.
+   *
+   * @param message - the binary message to analyze
+   * @returns - an object containing the analysis results @see AnalyzeMessageResult
+   */
+  async analyzeMessage(message: Buffer): Promise<AnalyzeMessageResult> {
+    const headerversion = message.readInt8(0)
+    if (headerversion !== GlueSchemaRegistry.HEADER_VERSION) {
+      return {
+        valid: false,
+        error: ERROR.INVALID_HEADER_VERSION,
+      }
+    }
+    const compression = message.readInt8(1)
+    if (
+      compression !== GlueSchemaRegistry.COMPRESSION_DEFAULT &&
+      compression !== GlueSchemaRegistry.COMPRESSION_ZLIB
+    ) {
+      return {
+        valid: false,
+        error: ERROR.INVALID_COMPRESSION,
+      }
+    }
+    try {
+      const producerSchemaId = uuid.stringify(message, 2)
+      try {
+        const producerschema = await this.loadGlueSchema(producerSchemaId)
+        if (!producerschema) throw new Error('Schema not found')
+        return {
+          valid: true,
+          headerversion,
+          compression,
+          schemaId: producerSchemaId,
+          schema: producerschema,
+        }
+      } catch (e) {
+        return {
+          valid: false,
+          error: ERROR.INVALID_SCHEMA,
+        }
+      }
+    } catch (e) {
+      return {
+        valid: false,
+        error: ERROR.INVALID_SCHEMA_ID,
+      }
+    }
   }
 
   /**
