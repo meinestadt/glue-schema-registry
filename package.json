@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/meinestadt/glue-schema-registry#readme",
   "devDependencies": {
-    "@jest/globals": "^29.4.0",
+    "@jest/globals": "^29.4.1",
     "@types/node": "^18.11.13",
     "@types/uuid": "^9.0.0",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
