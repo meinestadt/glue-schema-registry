@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.3.1...v1.4.0) (2023-01-27)
+
+
+### Features
+
+* added analyze method which returns meta data for a given message ([123022d](https://github.com/meinestadt/glue-schema-registry/commit/123022d03c31c501ed089b0084cf0773271a2d85))
+
 ## [1.3.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.3.0...v1.3.1) (2023-01-06)
 
 
