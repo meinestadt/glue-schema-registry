@@ -134,6 +134,7 @@ export class GlueSchemaRegistry<T> {
         },
       })
       .promise()
+    if (res.SchemaVersionStatus === "FAILURE") throw new Error('Schema registration failure')
     return res.SchemaVersionId
   }
 
@@ -163,6 +164,7 @@ export class GlueSchemaRegistry<T> {
       })
       .promise()
     if (!schema.SchemaVersionId) throw new Error('Schema does not have SchemaVersionId')
+    if (schema.Status === "FAILURE") throw new Error('Schema registration failure')
     this.glueSchemaIdCache[hashString] = schema.SchemaVersionId
     // store the avro schema in its cache to avoid another glue lookup when it's used
     const avroSchema = avro.Type.forSchema(JSON.parse(props.schema))
