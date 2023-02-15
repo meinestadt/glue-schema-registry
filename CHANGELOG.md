@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/meinestadt/glue-schema-registry/compare/v1.4.1...v1.4.2) (2023-02-15)
+
+
+### Bug Fixes
+
+* fixed pipeline to run unit tests on release please ([#119](https://github.com/meinestadt/glue-schema-registry/issues/119)) ([8b996b5](https://github.com/meinestadt/glue-schema-registry/commit/8b996b5fe5d14ec19674ccfed14d395e897d94d4))
+
 ## [1.4.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.4.0...v1.4.1) (2023-02-15)
 
 
