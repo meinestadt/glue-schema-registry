@@ -35,6 +35,9 @@ const sdkmock = SDKMock.getInstance()
 const compressedHelloWorld =
   '0305b7912285527d42de88eee389a763225f789c93f048cdc9c95728cf2fca495104001e420476'
 
+const messageWithNotExistingSchema =
+  '030500000000000000000000000000000000789c93f048cdc9c95728cf2fca495104001e420476'
+
 // valid message with uncompressed content
 const uncompressedHelloWorld = '0300b7912285527d42de88eee389a763225f1848656c6c6f20776f726c6421'
 
@@ -179,6 +182,14 @@ describe('test analyze message', () => {
     const result = await schemaregistry.analyzeMessage(Buffer.from(malformedCompression, 'hex'))
     expect(result.valid).toBe(false)
     expect(result.error).toBe(ERROR.INVALID_COMPRESSION)
+  })
+  test('analyze should throw an error if the schema does not exist', async () => {
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const result = await schemaregistry.analyzeMessage(
+      Buffer.from(messageWithNotExistingSchema, 'hex'),
+    )
+    expect(result.valid).toBe(false)
+    expect(result.error).toBe(ERROR.INVALID_SCHEMA)
   })
 })
 
