@@ -121,6 +121,7 @@ export class GlueSchemaRegistry<T> {
    *
    * @param props - the details about the schema
    * @throws if the schema already exists
+   * @throws if the Glue compatibility check fails
    */
   public async createSchema(props: CreateSchemaProps) {
     const res = await this.gc
@@ -134,17 +135,18 @@ export class GlueSchemaRegistry<T> {
         },
       })
       .promise()
+    if (res.SchemaVersionStatus === 'FAILURE') throw new Error('Schema registration failure')
     return res.SchemaVersionId
   }
 
   /**
    * Registers a new version of an existing schema.
    * Returns the id of the existing schema version if a similar version already exists.
-   * Throws an exception if the schema does not exist.
-   * Throws an exception if the Glue compatibility check fails.
    *
    * @param props - the details about the schema
-   * @returns {string} the id of the schema version.
+   * @returns {string} the id of the schema version
+   * @throws if the schema does not exist
+   * @throws if the Glue compatibility check fails
    */
   async register(props: RegisterSchemaProps): Promise<string> {
     const hash = crypto.createHash('SHA256').update(props.schemaName + '.' + props.schema)
@@ -163,6 +165,7 @@ export class GlueSchemaRegistry<T> {
       })
       .promise()
     if (!schema.SchemaVersionId) throw new Error('Schema does not have SchemaVersionId')
+    if (schema.Status === 'FAILURE') throw new Error('Schema registration failure')
     this.glueSchemaIdCache[hashString] = schema.SchemaVersionId
     // store the avro schema in its cache to avoid another glue lookup when it's used
     const avroSchema = avro.Type.forSchema(JSON.parse(props.schema))
