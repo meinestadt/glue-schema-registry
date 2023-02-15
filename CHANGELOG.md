@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/meinestadt/glue-schema-registry/compare/v1.4.0...v1.4.1) (2023-02-15)
+
+
+### Bug Fixes
+
+* check for schema registration failure ([#113](https://github.com/meinestadt/glue-schema-registry/issues/113)) ([8c681cb](https://github.com/meinestadt/glue-schema-registry/commit/8c681cb86b3dd260ce6220b83c7ac673df265d76))
+
 ## [1.4.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.3.1...v1.4.0) (2023-01-27)
 
 
