@@ -21,11 +21,8 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
         if: ${{ steps.release.outputs.release_created }}  
       - run: npm ci
-        if: ${{ steps.release.outputs.release_created }}
       - run: npm run test
-        if: ${{ steps.release.outputs.release_created }}  
       - run: npm run build
-        if: ${{ steps.release.outputs.release_created }}
       - run: npm publish --access public
         if: ${{ steps.release.outputs.release_created }}
         env:
