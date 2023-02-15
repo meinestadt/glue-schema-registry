@@ -257,6 +257,12 @@ export class GlueSchemaRegistry<T> {
       try {
         const producerschema = await this.loadGlueSchema(producerSchemaId)
         if (!producerschema) throw new Error('Schema not found')
+        if (producerschema.Status === 'FAILURE') {
+          return {
+            valid: false,
+            error: ERROR.INVALID_SCHEMA,
+          }
+        }
         return {
           valid: true,
           headerversion,

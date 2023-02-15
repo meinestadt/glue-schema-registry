@@ -26,14 +26,25 @@ export default class SDKMock {
     .mockName('registerSchemaVersion')
 
   mockedGetSchemaVersion = jest
-    .fn()
-    .mockReturnValue({
-      promise: () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .fn((arg: any) => {
+      if (arg.SchemaVersionId === '00000000-0000-0000-0000-000000000000') {
         return {
-          SchemaDefinition: JSON.stringify(this.testschema),
-          SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+          promise: () => {
+            return {
+              Status: 'FAILURE',
+            }
+          },
         }
-      },
+      }
+      return {
+        promise: () => {
+          return {
+            SchemaDefinition: JSON.stringify(this.testschema),
+            SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+          }
+        },
+      }
     })
     .mockName('getSchemaVersion')
 
