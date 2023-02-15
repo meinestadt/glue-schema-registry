@@ -13,7 +13,6 @@ jobs:
           release-type: node
           package-name: release-please-action
       - uses: actions/checkout@v3
-        if: ${{ steps.release.outputs.release_created }}
       # Setup .npmrc file to publish to npm
       - uses: actions/setup-node@v3
         with:
