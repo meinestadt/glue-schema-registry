@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.4.2...v2.0.0) (2023-03-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* migrated from AWS SDK v2 to AWS SDK v3 ([#171](https://github.com/meinestadt/glue-schema-registry/issues/171))
+
+### Features
+
+* migrated from AWS SDK v2 to AWS SDK v3 ([#171](https://github.com/meinestadt/glue-schema-registry/issues/171)) ([2230300](https://github.com/meinestadt/glue-schema-registry/commit/22303002407ee0f7d8bfe18573ae312dd318ed40))
+
 ## [1.4.2](https://github.com/meinestadt/glue-schema-registry/compare/v1.4.1...v1.4.2) (2023-02-15)
 
 
