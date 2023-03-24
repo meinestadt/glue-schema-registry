@@ -49,7 +49,9 @@ const malformedCompression = '0301b7912285527d42de88eee389a763225f1848656c6c6f20
 
 describe('schema management', () => {
   test('create schema', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestType>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
+      region: 'eu-central-1',
+    })
     await schemaregistry.createSchema({
       schema: JSON.stringify(testschemaV2),
       schemaName: 'Testschema',
@@ -65,7 +67,9 @@ describe('serde with compression', () => {
   let schemaId: string
 
   beforeAll(async () => {
-    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry')
+    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
+      region: 'eu-central-1',
+    })
     sdkmock.clear()
   })
 
@@ -95,7 +99,9 @@ describe('serde with compression', () => {
   })
 
   test('deserialization with schema evolution', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     schemaId = await schemaregistry.register({
       schema: JSON.stringify(testschema),
       schemaName: 'Testschema',
@@ -108,7 +114,9 @@ describe('serde with compression', () => {
   })
 
   test('deserialization with clear cache', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     const binmessage = compressedHelloWorld
     const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
     expect(object.demo).toBe('Hello world!')
@@ -121,7 +129,9 @@ describe('serde without compression', () => {
   let schemaId: string
 
   beforeAll(async () => {
-    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry')
+    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
+      region: 'eu-central-1',
+    })
     sdkmock.clear()
   })
 
@@ -162,7 +172,9 @@ describe('serde without compression', () => {
 
 describe('test analyze message', () => {
   test('analyze should succeed for a valid message', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     const result = await schemaregistry.analyzeMessage(Buffer.from(compressedHelloWorld, 'hex'))
     expect(result.valid).toBe(true)
     expect(result.compression).toBe(GlueSchemaRegistry.COMPRESSION_ZLIB)
@@ -172,19 +184,25 @@ describe('test analyze message', () => {
     )
   })
   test('analyze should not succeed for an invalid message', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     const result = await schemaregistry.analyzeMessage(Buffer.from(malformedMessage, 'hex'))
     expect(result.valid).toBe(false)
     expect(result.error).toBe(ERROR.INVALID_HEADER_VERSION)
   })
   test('analyze should not succeed for an invalid compression type', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     const result = await schemaregistry.analyzeMessage(Buffer.from(malformedCompression, 'hex'))
     expect(result.valid).toBe(false)
     expect(result.error).toBe(ERROR.INVALID_COMPRESSION)
   })
   test('analyze should throw an error if the schema does not exist', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     const result = await schemaregistry.analyzeMessage(
       Buffer.from(messageWithNotExistingSchema, 'hex'),
     )
@@ -195,7 +213,9 @@ describe('test analyze message', () => {
 
 describe('test error cases', () => {
   test('exception if header is wrong', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     const binmessage = malformedMessage
     expect.assertions(1)
     try {
@@ -206,7 +226,9 @@ describe('test error cases', () => {
     }
   })
   test('exception compression byte is wrong', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry')
+    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+      region: 'eu-central-1',
+    })
     const binmessage = malformedCompression
     expect.assertions(1)
     try {

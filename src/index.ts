@@ -1,9 +1,8 @@
-import * as sdk from 'aws-sdk'
 import * as crypto from 'crypto'
 import * as uuid from 'uuid'
 import * as avro from 'avsc'
 import * as zlib from 'zlib'
-import { GetSchemaVersionResponse } from 'aws-sdk/clients/glue'
+import * as gluesdk from '@aws-sdk/client-glue'
 
 export enum SchemaType {
   AVRO = 'AVRO',
@@ -65,7 +64,7 @@ export type AnalyzeMessageResult = {
   /**
    * the glue schema
    */
-  schema?: GetSchemaVersionResponse
+  schema?: gluesdk.GetSchemaVersionResponse
 }
 
 export class GlueSchemaRegistry<T> {
@@ -74,7 +73,7 @@ export class GlueSchemaRegistry<T> {
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/serializer-deserializer/src/main/java/com/amazonaws/services/schemaregistry/serializers/SerializationDataEncoder.java
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/common/src/main/java/com/amazonaws/services/schemaregistry/utils/AWSSchemaRegistryConstants.java
   */
-  private gc: sdk.Glue
+  private gc: gluesdk.GlueClient
   public readonly registryName: string
   private glueSchemaIdCache: {
     [hash: string]: string
@@ -89,8 +88,8 @@ export class GlueSchemaRegistry<T> {
    * @param registryName - name of the Glue registry you want to use
    * @param props - optional AWS properties that are used when constructing the Glue object from the AWS SDK
    */
-  constructor(registryName: string, props?: sdk.Glue.ClientConfiguration) {
-    this.gc = new sdk.Glue(props)
+  constructor(registryName: string, props: gluesdk.GlueClientConfig) {
+    this.gc = new gluesdk.GlueClient(props)
     this.registryName = registryName
     this.glueSchemaIdCache = {}
     this.avroSchemaCache = {}
@@ -101,16 +100,16 @@ export class GlueSchemaRegistry<T> {
    *
    * @param props settings for the AWS Glue client
    */
-  public updateGlueClient(props?: sdk.Glue.ClientConfiguration) {
-    this.gc = new sdk.Glue(props)
+  public updateGlueClient(props: gluesdk.GlueClientConfig) {
+    this.gc = new gluesdk.GlueClient(props)
   }
 
   private async loadGlueSchema(schemaId: string) {
-    const existingschema = await this.gc
-      .getSchemaVersion({
+    const existingschema = await this.gc.send(
+      new gluesdk.GetSchemaVersionCommand({
         SchemaVersionId: schemaId,
-      })
-      .promise()
+      }),
+    )
     return existingschema
   }
 
@@ -124,8 +123,8 @@ export class GlueSchemaRegistry<T> {
    * @throws if the Glue compatibility check fails
    */
   public async createSchema(props: CreateSchemaProps) {
-    const res = await this.gc
-      .createSchema({
+    const res = await this.gc.send(
+      new gluesdk.CreateSchemaCommand({
         DataFormat: props.type,
         Compatibility: props.compatibility,
         SchemaName: props.schemaName,
@@ -133,8 +132,8 @@ export class GlueSchemaRegistry<T> {
         RegistryId: {
           RegistryName: this.registryName,
         },
-      })
-      .promise()
+      }),
+    )
     if (res.SchemaVersionStatus === 'FAILURE') throw new Error('Schema registration failure')
     return res.SchemaVersionId
   }
@@ -155,15 +154,15 @@ export class GlueSchemaRegistry<T> {
     if (cachehit) {
       return cachehit
     }
-    const schema = await this.gc
-      .registerSchemaVersion({
+    const schema = await this.gc.send(
+      new gluesdk.RegisterSchemaVersionCommand({
         SchemaDefinition: props.schema,
         SchemaId: {
           RegistryName: this.registryName,
           SchemaName: props.schemaName,
         },
-      })
-      .promise()
+      }),
+    )
     if (!schema.SchemaVersionId) throw new Error('Schema does not have SchemaVersionId')
     if (schema.Status === 'FAILURE') throw new Error('Schema registration failure')
     this.glueSchemaIdCache[hashString] = schema.SchemaVersionId
