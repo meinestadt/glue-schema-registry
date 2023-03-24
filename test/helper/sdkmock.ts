@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals'
 import * as avro from 'avsc'
-
+import sdktypes from '@aws-sdk/types/dist-types/command'
 /**
  * Singleton providing a mock of the AWS SDK with some Glue functions.
  */
@@ -13,52 +13,39 @@ export default class SDKMock {
     fields: [{ name: 'demo', type: 'string', default: 'Hello World' }],
   })
 
-  mockedRegisterSchemaVersion = jest
-    .fn()
-    .mockReturnValue({
-      promise: () => {
-        return {
-          SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
-          SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
-        }
-      },
-    })
-    .mockName('registerSchemaVersion')
+  mockedRegisterSchemaVersion = jest.fn(() => {
+    return {
+      SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
+      SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+    }
+  })
 
   mockedGetSchemaVersion = jest
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .fn((arg: any) => {
       if (arg.SchemaVersionId === '00000000-0000-0000-0000-000000000000') {
         return {
-          promise: () => {
-            return {
-              Status: 'FAILURE',
-            }
-          },
+          Status: 'FAILURE',
         }
       }
       return {
-        promise: () => {
-          return {
-            SchemaDefinition: JSON.stringify(this.testschema),
-            SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
-          }
-        },
+        SchemaDefinition: JSON.stringify(this.testschema),
+        SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
       }
     })
     .mockName('getSchemaVersion')
 
-  mockedCreateSchema = jest
-    .fn()
-    .mockReturnValue({
-      promise: () => {
-        return {
-          SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225e',
-          SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
-        }
-      },
-    })
-    .mockName('createSchema')
+  mockedCreateSchema = jest.fn(() => {
+    return {
+      SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225e',
+      SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+    }
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockedSend = jest.fn().mockImplementation((command: any) => {
+    return command
+  })
 
   /**
    * Calls mockClear on all mocked functions.
@@ -67,18 +54,23 @@ export default class SDKMock {
     this.mockedGetSchemaVersion.mockClear()
     this.mockedRegisterSchemaVersion.mockClear()
     this.mockedCreateSchema.mockClear()
+    this.mockedSend.mockClear()
   }
 
   private constructor() {
-    jest.mock('aws-sdk', () => {
+    jest.mock('@aws-sdk/client-glue', () => {
       return {
-        Glue: jest.fn(() => {
+        GlueClient: jest.fn(() => {
           return {
             registerSchemaVersion: this.mockedRegisterSchemaVersion,
             getSchemaVersion: this.mockedGetSchemaVersion,
             createSchema: this.mockedCreateSchema,
+            send: this.mockedSend,
           }
         }),
+        RegisterSchemaVersionCommand: this.mockedRegisterSchemaVersion,
+        CreateSchemaCommand: this.mockedCreateSchema,
+        GetSchemaVersionCommand: this.mockedGetSchemaVersion,
       }
     })
   }

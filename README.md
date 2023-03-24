@@ -9,6 +9,14 @@ Apache Avro-encoded messages can be created and consumed using this library. Pro
 
 This library works well with kafkajs (https://kafka.js.org).
 
+## 2023-03-24: Breaking changes
+
+The library has been rewritten to use the AWS SDK v3. This is a breaking chance.
+The migration should be relatively easy, but there are some API changes that you need to be aware of.
+
+1) the props parameter of the constructor is now mandatory. The type changed from `Glue.ClientConfiguration` to `GlueClientConfig`.
+2) the props parameter of `updateGlueClient` is now mandatory. The type changed from `Glue.ClientConfiguration` to `GlueClientConfig`.
+3) the return type of `analyzeMessage` has changed. The type of the schema field is now `GetSchemaVersionResponse` from the SDK v3.
 
 ## Getting started
 
@@ -64,11 +72,11 @@ const schemaId = await registry.register({
 
 // now you can encode an object
 const encodedmessage = await registry.encode(schemaId, object);
-`````
+```
 
 the encoded message can then be sent to Kafka or MSK, for example:
 
-````typescript
+```typescript
 // import * as kafka from "kafkajs"
 // ...
 const kc = new kafka.Kafka(); 
@@ -78,11 +86,11 @@ await producer.send({
     topic: "<TOPICNAME>",
     messages: [{ value: encodedmessage }],
 });
-````
+```
 
 To decode received messages:
 
-````typescript
+```typescript
     const schema = avro.Type.forSchema({
         type: "record",
         name: "property",
@@ -92,7 +100,7 @@ To decode received messages:
         ]
     });
     const dataset = await registry.decode(message.value, schema);
-````
+```
 
 Note: registry.decode expects the raw message as the first parameter, plus the target schema as the second parameter.
 If the message is encoded with a different version of the schema, the encoding schema gets loaded from Glue.
@@ -106,7 +114,7 @@ If the schemas are not compatible an exception is thrown.
 You can set the type of the object that you want to encode, and that you receive when you decode a message, as type parameter when you create the instance.
 
 For example:
-````typescript
+```typescript
 interface Address {
   street: string;
   zip: string;
@@ -116,23 +124,23 @@ interface Address {
 const registry = new msglue.GlueSchemaRegistry<Address>("<GLUE REGISTRY NAME>", {
     region: "<AWS_REGION>",
 });
-````
+```
 
-The constructor takes an sdk.Glue.ClientConfiguration object as optional parameter.
+The constructor takes an GlueClientConfig object as parameter.
 
 ### Create a new schema
 
 Creates a new schema in the glue schema registry.
 Throws an error if the schema already exists.
 
-````typescript
+```typescript
 registry.createSchema({
     type: SchemaType // currently only SchemaType.AVRO
     schemaName: string
     compatibility: SchemaCompatibilityType // NONE, BACKWARD, BACKWARD_ALL, DISABLED, FORWARD, FORWARD_ALL, FULL, FULL_ALL
     schema: string // the schema as JSON string
 })
-````
+```
 
 ### Register a schema
 
@@ -141,30 +149,30 @@ Creates a new version if the schema does not exist yet.
 Throws an exception if the Glue compatibility check fails. 
 Schemas are cached so that subsequent calls of `register` do not lead to multiple AWS Glue calls.
 
-````typescript
+```typescript
 const schemaId = await registry.register({
     schemaName: string,
     type: SchemaType,  // currently only SchemaType.AVRO
     schema: string, // schemas as JSON string
 });
-````
+```
 
 
 ### Encode an object
 
 Encode the object with a given glueSchemaId and returns a Buffer containing the binary data.
 
-````typescript
+```typescript
 async encode(glueSchemaId: string, object: T, props?: EncodeProps): Promise<Buffer>
-````
+```
 
 Optional properties:
 
-````typescript
+```typescript
 {
   compress: boolean // default: true
 }
-````
+```
 
 
 ### Decode an object
@@ -178,22 +186,22 @@ if producer and consumer schema are not compatible.
 
 Decodes both uncompressed and gzip compressed messages.
 
-````typescript
+```typescript
 async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
-````
+```
 
 ### Get meta data for a message
 
 If you need meta data, such as schema id and glue schema, you can use
 
-````typescript
+```typescript
 async analyzeMessage(message: Buffer): Promise<AnalyzeMessageResult>
-````
+```
 
 to get the meta data for a message, without fully decoding it.
 The result is defined as follows:
 
-````typescript
+```typescript
 export type AnalyzeMessageResult = {
   /**
    * true if the message is valid
@@ -220,16 +228,16 @@ export type AnalyzeMessageResult = {
    */
   schema?: GetSchemaVersionResponse
 }
-````
+```
 
 ### Update the Glue client
 
 You can refresh the internally cached Glue client by calling `updateGlueClient`.
 This is particulary useful when credentials need to get updated.
 
-````typescript
-updateGlueClient(props?: sdk.Glue.ClientConfiguration)
-````
+```typescript
+updateGlueClient(props: GlueClientConfig)
+```
 
 ## Examples
 
@@ -239,7 +247,7 @@ The following lambda function consumes messages from Kafka/MSK, and prints the d
 object to the console.
 Incoming messages must be encoded with a compatible Avro schema.
 
-````typescript
+```typescript
 import * as avro from "avsc";
 import { GlueSchemaRegistry } from "@meinestadt.de/glue-schema-registry";
 
