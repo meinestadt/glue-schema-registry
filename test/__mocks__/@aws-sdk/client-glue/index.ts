@@ -1,17 +1,31 @@
+import {
+  CreateSchemaCommandInput,
+  CreateSchemaCommandOutput,
+  GetSchemaVersionCommandInput,
+  GetSchemaVersionCommandOutput,
+  RegisterSchemaVersionCommandInput,
+  RegisterSchemaVersionCommandOutput,
+} from '@aws-sdk/client-glue'
 import { jest } from '@jest/globals'
 
 // type for all Glue commands
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type GlueCommandMock = jest.MockedFunction<(params: unknown) => any>
+type GlueCommandMock<Input, Output> = jest.MockedFunction<(params: Input) => Promise<Output>>
 
 const mockedSend = jest.fn().mockImplementation((command: unknown) => {
   return new Promise((resolve) => {
     resolve(command)
   })
 })
-const mockedRegisterSchemaVersion: GlueCommandMock = jest.fn()
-const mockedGetSchemaVersion: GlueCommandMock = jest.fn()
-const mockedCreateSchema: GlueCommandMock = jest.fn()
+const mockedRegisterSchemaVersion: GlueCommandMock<
+  RegisterSchemaVersionCommandInput,
+  RegisterSchemaVersionCommandOutput
+> = jest.fn()
+const mockedGetSchemaVersion: GlueCommandMock<
+  GetSchemaVersionCommandInput,
+  GetSchemaVersionCommandOutput
+> = jest.fn()
+const mockedCreateSchema: GlueCommandMock<CreateSchemaCommandInput, CreateSchemaCommandOutput> =
+  jest.fn()
 
 const GlueClientMock = jest.fn().mockImplementation(() => {
   return {
@@ -26,11 +40,18 @@ const clear = () => {
   mockedCreateSchema.mockClear()
 }
 
+const reset = () => {
+  mockedRegisterSchemaVersion.mockReset()
+  mockedGetSchemaVersion.mockReset()
+  mockedCreateSchema.mockReset()
+}
+
 export {
   GlueClientMock as GlueClient,
   mockedCreateSchema as CreateSchemaCommand,
   mockedRegisterSchemaVersion as RegisterSchemaVersionCommand,
   mockedGetSchemaVersion as GetSchemaVersionCommand,
   mockedSend as send,
+  reset,
   clear,
 }
