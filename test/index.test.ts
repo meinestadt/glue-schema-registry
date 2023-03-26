@@ -1,7 +1,6 @@
 import { describe, expect, test, beforeAll, beforeEach, jest } from '@jest/globals'
 import { ERROR, GlueSchemaRegistry, SchemaCompatibilityType, SchemaType } from '../src'
 import * as avro from 'avsc'
-import { GlueClient } from '@aws-sdk/client-glue'
 import * as GlueClientMock from './__mocks__/@aws-sdk/client-glue'
 
 jest.mock('@aws-sdk/client-glue')
@@ -60,7 +59,11 @@ describe('schema management', () => {
   })
   test('create schema', async () => {
     // sdkmock.mockedCreateSchema.mockResolvedValue({})
-    GlueClientMock.CreateSchemaCommand.mockResolvedValue({})
+    GlueClientMock.CreateSchemaCommand.mockResolvedValue({
+      $metadata: {
+        httpStatusCode: 200,
+      },
+    })
     await schemaregistry.createSchema({
       schema: JSON.stringify(testschemaV2),
       schemaName: 'Testschema',
@@ -84,8 +87,13 @@ describe('serde with compression', () => {
 
   test('serialization', async () => {
     GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
       SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
-      SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
     })
     schemaId = await schemaregistry.register({
       schema: JSON.stringify(testschema),
@@ -102,8 +110,13 @@ describe('serde with compression', () => {
 
   test('deserialization with newly registered schema', async () => {
     GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
       SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
-      SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
     })
     schemaId = await schemaregistry.register({
       schema: JSON.stringify(testschema),
@@ -118,6 +131,12 @@ describe('serde with compression', () => {
 
   test('deserialization with schema from registry', async () => {
     GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
       SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
       SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
       SchemaDefinition: JSON.stringify(testschema),
@@ -136,6 +155,16 @@ describe('serde with schema evolution', () => {
     schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
       region: 'eu-central-1',
     })
+    GlueClientMock.reset()
+    GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
+    })
   })
   beforeEach(async () => {
     GlueClientMock.clear()
@@ -150,13 +179,21 @@ describe('serde with schema evolution', () => {
     const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
     expect(GlueClientMock.send).toBeCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
+    expect(schemaId).toBe('b7912285-527d-42de-88ee-e389a763225f')
     expect(object.v2demo).toBe('Meinestadt')
   })
 
   test('deserialization with cache', async () => {
     GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
-      SchemaDefinition: JSON.stringify(testschema),
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
+      SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
       SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+      SchemaDefinition: JSON.stringify(testschema),
     })
 
     const binmessage = compressedHelloWorld
@@ -174,6 +211,16 @@ describe('serde without compression', () => {
   beforeAll(async () => {
     schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
       region: 'eu-central-1',
+    })
+    GlueClientMock.reset()
+    GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
     })
   })
   beforeEach(async () => {
@@ -216,6 +263,20 @@ describe('serde without compression', () => {
 })
 
 describe('test analyze message', () => {
+  beforeAll(async () => {
+    GlueClientMock.reset()
+    GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
+      SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
+      SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+      SchemaDefinition: JSON.stringify(testschema),
+    })
+  })
   test('analyze should succeed for a valid message', async () => {
     const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
       region: 'eu-central-1',
@@ -250,6 +311,10 @@ describe('test analyze message', () => {
     })
     GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
       Status: 'FAILURE',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
     })
     const result = await schemaregistry.analyzeMessage(
       Buffer.from(messageWithNotExistingSchema, 'hex'),
@@ -261,6 +326,9 @@ describe('test analyze message', () => {
 
 describe('test error cases', () => {
   let schemaregistry: GlueSchemaRegistry<TestType>
+  beforeAll(async () => {
+    GlueClientMock.reset()
+  })
   beforeEach(async () => {
     schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
       region: 'eu-central-1',
