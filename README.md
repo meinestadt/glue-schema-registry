@@ -11,7 +11,7 @@ This library works well with kafkajs (https://kafka.js.org).
 
 ## 2023-03-24: Breaking changes
 
-The library has been rewritten to use the AWS SDK v3. This is a breaking chance.
+The library has been rewritten to use the AWS SDK v3. This is a breaking change.
 The migration should be relatively easy, but there are some API changes that you need to be aware of.
 
 1) the props parameter of the constructor is now mandatory. The type changed from `Glue.ClientConfiguration` to `GlueClientConfig`.
