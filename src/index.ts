@@ -1,11 +1,14 @@
-import * as crypto from 'crypto'
-import * as uuid from 'uuid'
-import * as avro from 'avsc'
-import * as zlib from 'zlib'
 import * as gluesdk from '@aws-sdk/client-glue'
+import * as avro from 'avsc'
+import * as crypto from 'crypto'
+import * as protobuf from 'protobufjs'
+import * as uuid from 'uuid'
+import * as zlib from 'zlib'
+
 
 export enum SchemaType {
   AVRO = 'AVRO',
+  PROTOBUF = 'PROTOBUF',
 }
 export interface RegisterSchemaProps {
   type: SchemaType
@@ -67,7 +70,7 @@ export type AnalyzeMessageResult = {
   schema?: gluesdk.GetSchemaVersionResponse
 }
 
-export class GlueSchemaRegistry<T> {
+export class GlueSchemaRegistry<T extends { [k: string]: any; }> {
   /*
   This class aims to be compatible with the java serde implementation from AWS.
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/serializer-deserializer/src/main/java/com/amazonaws/services/schemaregistry/serializers/SerializationDataEncoder.java
@@ -81,6 +84,9 @@ export class GlueSchemaRegistry<T> {
   private avroSchemaCache: {
     [key: string]: avro.Type
   }
+  private protobufSchemaCache: {
+    [key: string]: any
+  }
 
   /**
    * Constructs a GlueSchemaRegistry
@@ -93,6 +99,7 @@ export class GlueSchemaRegistry<T> {
     this.registryName = registryName
     this.glueSchemaIdCache = {}
     this.avroSchemaCache = {}
+    this.protobufSchemaCache = {};
   }
 
   /**
@@ -110,6 +117,7 @@ export class GlueSchemaRegistry<T> {
         SchemaVersionId: schemaId,
       }),
     )
+    if (!existingschema.SchemaDefinition) throw new Error('Glue returned undefined schema definition')
     return existingschema
   }
 
@@ -166,10 +174,38 @@ export class GlueSchemaRegistry<T> {
     if (!schema.SchemaVersionId) throw new Error('Schema does not have SchemaVersionId')
     if (schema.Status === 'FAILURE') throw new Error('Schema registration failure')
     this.glueSchemaIdCache[hashString] = schema.SchemaVersionId
-    // store the avro schema in its cache to avoid another glue lookup when it's used
-    const avroSchema = avro.Type.forSchema(JSON.parse(props.schema))
-    this.avroSchemaCache[schema.SchemaVersionId] = avroSchema
+    if (props.type == SchemaType.AVRO) {
+      // store the avro schema in its cache to avoid another glue lookup when it's used
+      const avroSchema = avro.Type.forSchema(JSON.parse(props.schema))
+      this.avroSchemaCache[schema.SchemaVersionId] = avroSchema
+    } else if (props.type == SchemaType.PROTOBUF) {
+      const parsedMessage = protobuf.parse(props.schema)
+      const root = parsedMessage.root
+      const protobufSchema = root.lookupType(
+        this.getTypeName(
+          parsedMessage, { 
+            messageName: props.schemaName 
+          }))
+      this.protobufSchemaCache[schema.SchemaVersionId] = protobufSchema
+    }
     return schema.SchemaVersionId
+  }
+
+  private getNestedTypeName(parent : { [k: string]: protobuf.ReflectionObject } | undefined) : string {
+      if (!parent)
+          throw new Error('Invalid parent');
+      const keys = Object.keys(parent);
+      const reflection = parent[keys[0]];
+      // Traverse down the nested Namespaces until we find a message Type instance (which extends Namespace)
+      if (reflection instanceof protobuf.Namespace && !(reflection instanceof protobuf.Type) && reflection.nested)
+          return this.getNestedTypeName(reflection.nested);
+      return keys[0];
+  }
+  private getTypeName(parsedMessage : protobuf.IParserResult, opts : { messageName? : string } = {}) {
+      const root = parsedMessage.root;
+      const pkg = parsedMessage.package;
+      const name = opts && opts.messageName ? opts.messageName : this.getNestedTypeName(root.nested);
+      return `${pkg ? pkg + '.' : ''}.${name}`;
   }
 
   static COMPRESSION_DEFAULT = 0
@@ -209,9 +245,18 @@ export class GlueSchemaRegistry<T> {
       new Promise((resolve) => {
         resolve(buf)
       })
-    const schema = await this.getAvroSchemaForGlueId(glueSchemaId)
+    const schema = await this.getSchemaForGlueId(glueSchemaId)
     // construct the message binary
-    const buf = schema.toBuffer(object)
+    let buf : Buffer
+    if (schema instanceof avro.Type) {
+      buf = schema.toBuffer(object)
+    } else if (schema instanceof protobuf.Type) {
+      const protoPayload = schema.create(object)
+      buf = Buffer.from(schema.encode(protoPayload).finish())
+    } else {
+      throw new Error('Unsupported schema type')
+    }
+    
     let compression_func = ZLIB_COMPRESS_FUNC
     let compressionbyte = GlueSchemaRegistry.COMPRESSION_ZLIB_BYTE
     if (props && !props.compress) {
@@ -290,7 +335,7 @@ export class GlueSchemaRegistry<T> {
    * @param consumerschema - The Avro schema that should be used to decode the message
    * @returns - the deserialized message as object
    */
-  async decode(message: Buffer, consumerschema: avro.Type): Promise<T> {
+  async decode(message: Buffer, consumerschema: avro.Type | undefined = undefined): Promise<T> {
     const headerversion = message.readInt8(0)
     const compression = message.readInt8(1)
     if (headerversion !== GlueSchemaRegistry.HEADER_VERSION) {
@@ -320,23 +365,73 @@ export class GlueSchemaRegistry<T> {
         resolve(buf)
       })
     const producerSchemaId = uuid.stringify(message, 2)
-    const producerschema = await this.getAvroSchemaForGlueId(producerSchemaId)
-    const resolver = this.getResolver(producerschema, consumerschema)
+    const producerschema = await this.getSchemaForGlueId(producerSchemaId)
     const content = Buffer.from(message.subarray(18))
     let handlecompression = NO_UNCOMPRESS_FUNC
     if (compression === GlueSchemaRegistry.COMPRESSION_ZLIB) {
       handlecompression = ZLIB_UNCOMPRESS_FUNC
     }
-    return consumerschema.fromBuffer(await handlecompression(content), resolver)
+    if (consumerschema instanceof avro.Type) {
+      const resolver = this.getResolver(producerschema, consumerschema)
+      return consumerschema.fromBuffer(await handlecompression(content), resolver)
+    } else {
+      // protobuf is backward compatible
+      return producerschema.decode(await handlecompression(content))
+    }
   }
 
-  private async getAvroSchemaForGlueId(id: string) {
+  /**
+   * Retrieve the latest version of a schema from the AWS Glue Schema Registry, 
+   * returning the schema version id.
+   * @param schemaName Fully qualified schema name, e.g. com.example.MySchema
+   * @returns string Glue SchemaVersionId
+   */
+  async getLatestSchemaId(schemaName: string): Promise<string> {
+    const schema = await this.gc.send(
+      new gluesdk.GetSchemaVersionCommand({
+        SchemaId: {
+          RegistryName: this.registryName,
+          SchemaName: schemaName,
+        },
+        SchemaVersionNumber: {
+          LatestVersion: true,
+        },
+      }),
+    )
+    if (!schema.SchemaVersionId) throw new Error('Glue loaded a schema without a SchemaVersionId')
+    this.cacheGlueSchema(schema.SchemaVersionId, schema)
+    return schema.SchemaVersionId
+  }
+
+  private async getSchemaForGlueId(id: string) {
     if (this.avroSchemaCache[id]) return this.avroSchemaCache[id]
-    const schemastring = (await this.loadGlueSchema(id)).SchemaDefinition
-    if (!schemastring) throw new Error('Glue returned undefined schema definition')
-    const schema = avro.Type.forSchema(JSON.parse(schemastring))
-    this.avroSchemaCache[id] = schema
-    return schema
+    if (this.protobufSchemaCache[id]) return this.protobufSchemaCache[id]
+    
+    const glueSchema = await this.loadGlueSchema(id)
+    this.cacheGlueSchema(id, glueSchema);
+
+    if (this.avroSchemaCache[id]) return this.avroSchemaCache[id]
+    if (this.protobufSchemaCache[id]) return this.protobufSchemaCache[id]
+  }
+
+  private cacheGlueSchema(id: string, glueSchema: gluesdk.GetSchemaVersionResponse) {
+    const schemastring = glueSchema.SchemaDefinition
+    if (glueSchema.DataFormat == SchemaType.AVRO) {
+      const schema = avro.Type.forSchema(JSON.parse(schemastring))
+      this.avroSchemaCache[id] = schema
+    } else if (glueSchema.DataFormat == SchemaType.PROTOBUF) {
+      const parsedMessage = protobuf.parse(schemastring)
+      const root = parsedMessage.root
+      const schema = root.lookupType(
+        this.getTypeName(
+          parsedMessage, {  // could get messageName from the arn: arn:aws:glue:us-east-1:accountID:schema/registryName/package.name.MessageName
+            //messageName: glueSchema
+          }))
+      this.protobufSchemaCache[id] = schema
+    } else {
+      // unsupported data format
+      throw new Error('Unsupported data format: ' + glueSchema.DataFormat);
+    }
   }
 
   private UUIDstringToByteArray(id: string) {
