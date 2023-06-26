@@ -117,7 +117,6 @@ export class GlueSchemaRegistry<T extends { [k: string]: any; }> {
         SchemaVersionId: schemaId,
       }),
     )
-    if (!existingschema.SchemaDefinition) throw new Error('Glue returned undefined schema definition')
     return existingschema
   }
 
@@ -415,6 +414,7 @@ export class GlueSchemaRegistry<T extends { [k: string]: any; }> {
   }
 
   private cacheGlueSchema(id: string, glueSchema: gluesdk.GetSchemaVersionResponse) {
+    if (!glueSchema.SchemaDefinition) throw new Error('Glue returned undefined schema definition')
     const schemastring = glueSchema.SchemaDefinition
     if (glueSchema.DataFormat == SchemaType.AVRO) {
       const schema = avro.Type.forSchema(JSON.parse(schemastring))
