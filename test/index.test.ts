@@ -1,6 +1,7 @@
-import { describe, expect, test, beforeAll, beforeEach, jest } from '@jest/globals'
-import { ERROR, GlueSchemaRegistry, SchemaCompatibilityType, SchemaType } from '../src'
+import { beforeAll, beforeEach, describe, expect, jest, test } from '@jest/globals'
 import * as avro from 'avsc'
+import * as protobuf from 'protobufjs'
+import { ERROR, GlueSchemaRegistry, SchemaCompatibilityType, SchemaType } from '../src'
 import * as GlueClientMock from './__mocks__/@aws-sdk/client-glue'
 
 jest.mock('@aws-sdk/client-glue')
@@ -14,14 +15,14 @@ interface TestTypeV2 {
   v2demo: string
 }
 
-const testschema = avro.Type.forSchema({
+const testavroschema = avro.Type.forSchema({
   type: 'record',
   name: 'property',
   namespace: 'de.meinestadt.test',
   fields: [{ name: 'demo', type: 'string', default: 'Hello World' }],
 })
 
-const testschemaV2 = avro.Type.forSchema({
+const testavroschemaV2 = avro.Type.forSchema({
   type: 'record',
   name: 'property',
   namespace: 'de.meinestadt.test',
@@ -31,12 +32,37 @@ const testschemaV2 = avro.Type.forSchema({
   ],
 })
 
+const testprotobufschema = `
+syntax = "proto2";
+
+package de.meinestadt.test;
+
+message property {
+  optional string demo = 1 [default="Hello World"];
+}
+`
+
+const testprotobufschemaV2 = `
+syntax = "proto2";
+
+package de.meinestadt.test;
+
+message property {
+  optional string demo = 1 [default="Hello World"];
+  optional string v2demo = 2 [default="Meinestadt"];
+}
+`
+const testprotobufschemaType = protobuf.parse(testprotobufschema).root.lookup('de.meinestadt.test.property')
+
+
 // const sdkmock = SDKMock.getInstance()
 
 // valid message with gzip compressed content
-const compressedHelloWorld =
+const compressedAvroHelloWorld =
   '0305b7912285527d42de88eee389a763225f789c93f048cdc9c95728cf2fca495104001e420476'
-
+const compressedProtobufHelloWorld =
+  '0305c7912285527d42de88eee389a763225e789ce3e2f148cdc9c95728cf2fca495104001e330474'
+  
 const messageWithNotExistingSchema =
   '030500000000000000000000000000000000789c93f048cdc9c95728cf2fca495104001e420476'
 
@@ -65,12 +91,18 @@ describe('schema management', () => {
       },
     })
     await schemaregistry.createSchema({
-      schema: JSON.stringify(testschemaV2),
+      schema: JSON.stringify(testavroschemaV2),
       schemaName: 'Testschema',
       compatibility: SchemaCompatibilityType.BACKWARD,
       type: SchemaType.AVRO,
     })
-    expect(GlueClientMock.send).toBeCalledTimes(1)
+    await schemaregistry.createSchema({
+      schema: JSON.stringify(testprotobufschemaV2),
+      schemaName: 'Testprotobufschema',
+      compatibility: SchemaCompatibilityType.BACKWARD,
+      type: SchemaType.PROTOBUF,
+    })
+    expect(GlueClientMock.send).toBeCalledTimes(2)
   })
 })
 
@@ -85,7 +117,7 @@ describe('serde with compression', () => {
     GlueClientMock.clear()
   })
 
-  test('serialization', async () => {
+  test('serialization - avro', async () => {
     GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
       VersionNumber: 1,
       Status: 'AVAILABLE',
@@ -96,7 +128,7 @@ describe('serde with compression', () => {
       },
     })
     schemaId = await schemaregistry.register({
-      schema: JSON.stringify(testschema),
+      schema: JSON.stringify(testavroschema),
       schemaName: 'Testschema',
       type: SchemaType.AVRO,
     })
@@ -105,10 +137,34 @@ describe('serde with compression', () => {
     })
     const binmessage = bindata.toString('hex')
     expect(GlueClientMock.send).toBeCalledTimes(1)
-    expect(binmessage).toBe(compressedHelloWorld)
+    expect(binmessage).toBe(compressedAvroHelloWorld)
   })
 
-  test('deserialization with newly registered schema', async () => {
+  test('serialization - protobuf', async () => {
+    GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      SchemaVersionId: 'c7912285-527d-42de-88ee-e389a763225e',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
+    })
+    schemaId = await schemaregistry.register({
+      schema: testprotobufschema,
+      schemaName: 'property',
+      type: SchemaType.PROTOBUF,
+    })
+    const bindata = await schemaregistry.encode(schemaId, {
+      demo: 'Hello world!',
+    })
+    const binmessage = bindata.toString('hex')
+    expect(GlueClientMock.send).toBeCalledTimes(1)
+    console.log(binmessage);
+    expect(binmessage).toBe(compressedProtobufHelloWorld)
+  })
+
+  test('deserialization - avro with newly registered schema', async () => {
     GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
       VersionNumber: 1,
       Status: 'AVAILABLE',
@@ -119,17 +175,38 @@ describe('serde with compression', () => {
       },
     })
     schemaId = await schemaregistry.register({
-      schema: JSON.stringify(testschema),
+      schema: JSON.stringify(testavroschema),
       schemaName: 'Testschema',
       type: SchemaType.AVRO,
     })
-    const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+    const binmessage = compressedAvroHelloWorld
+    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testavroschema)
     expect(GlueClientMock.send).toBeCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
   })
 
-  test('deserialization with schema from registry', async () => {
+  test('deserialization - protobuf with newly registered schema', async () => {
+    GlueClientMock.RegisterSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      SchemaVersionId: 'c7912285-527d-42de-88ee-e389a763225e',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
+    })
+    schemaId = await schemaregistry.register({
+      schema: testprotobufschema,
+      schemaName: 'property',
+      type: SchemaType.PROTOBUF,
+    })
+    const binmessage = compressedProtobufHelloWorld
+    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'))
+    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(object.demo).toBe('Hello world!')
+  })
+
+  test('deserialization with avro schema from registry', async () => {
     GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
       VersionNumber: 1,
       Status: 'AVAILABLE',
@@ -139,10 +216,31 @@ describe('serde with compression', () => {
       },
       SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
       SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
-      SchemaDefinition: JSON.stringify(testschema),
+      SchemaDefinition: JSON.stringify(testavroschema),
+      DataFormat: 'AVRO',
     })
-    const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+    const binmessage = compressedAvroHelloWorld
+    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testavroschema)
+    expect(GlueClientMock.GetSchemaVersionCommand).toBeCalledTimes(1)
+    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(object.demo).toBe('Hello world!')
+  })
+
+  test('deserialization with protobuf schema from registry', async () => {
+    GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
+      VersionNumber: 1,
+      Status: 'AVAILABLE',
+      $metadata: {
+        httpStatusCode: 200,
+        requestId: '12345678901234567890123456789012',
+      },
+      SchemaVersionId: 'c7912285-527d-42de-88ee-e389a763225e',
+      SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
+      SchemaDefinition: testprotobufschema,
+      DataFormat: 'PROTOBUF',
+    })
+    const binmessage = compressedProtobufHelloWorld
+    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'))
     expect(GlueClientMock.GetSchemaVersionCommand).toBeCalledTimes(1)
     expect(GlueClientMock.send).toBeCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
@@ -171,12 +269,12 @@ describe('serde with schema evolution', () => {
   })
   test('deserialization with schema evolution', async () => {
     const schemaId = await schemaregistry.register({
-      schema: JSON.stringify(testschema),
+      schema: JSON.stringify(testavroschema),
       schemaName: 'Testschema',
       type: SchemaType.AVRO,
     })
-    const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
+    const binmessage = compressedAvroHelloWorld
+    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testavroschemaV2)
     expect(GlueClientMock.send).toBeCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
     expect(schemaId).toBe('b7912285-527d-42de-88ee-e389a763225f')
@@ -193,11 +291,11 @@ describe('serde with schema evolution', () => {
       },
       SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
       SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
-      SchemaDefinition: JSON.stringify(testschema),
+      SchemaDefinition: JSON.stringify(testavroschema),
     })
 
-    const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
+    const binmessage = compressedAvroHelloWorld
+    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testavroschemaV2)
     // expect to have no calls to the schema registry as the schema should be cached from the previos test
     expect(GlueClientMock.send).toBeCalledTimes(0)
     expect(object.demo).toBe('Hello world!')
@@ -228,7 +326,7 @@ describe('serde without compression', () => {
   })
   test('serialization', async () => {
     const schemaId = await schemaregistry.register({
-      schema: JSON.stringify(testschema),
+      schema: JSON.stringify(testavroschema),
       schemaName: 'Testschema',
       type: SchemaType.AVRO,
     })
@@ -250,12 +348,12 @@ describe('serde without compression', () => {
 
   test('deserialization', async () => {
     const schemaId = await schemaregistry.register({
-      schema: JSON.stringify(testschema),
+      schema: JSON.stringify(testavroschema),
       schemaName: 'Testschema',
       type: SchemaType.AVRO,
     })
     const binmessage = uncompressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testavroschema)
     // expect that mockRegisterSchemaVersion was not called, otherwise the cache wouldn't work
     expect(GlueClientMock.RegisterSchemaVersionCommand).toBeCalledTimes(0)
     expect(object.demo).toBe('Hello world!')
@@ -274,14 +372,14 @@ describe('test analyze message', () => {
       },
       SchemaVersionId: 'b7912285-527d-42de-88ee-e389a763225f',
       SchemaArn: 'arn:aws:glue:eu-central-1:123456789012:schema/testregistry/Testschema',
-      SchemaDefinition: JSON.stringify(testschema),
+      SchemaDefinition: JSON.stringify(testavroschema),
     })
   })
   test('analyze should succeed for a valid message', async () => {
     const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
       region: 'eu-central-1',
     })
-    const result = await schemaregistry.analyzeMessage(Buffer.from(compressedHelloWorld, 'hex'))
+    const result = await schemaregistry.analyzeMessage(Buffer.from(compressedAvroHelloWorld, 'hex'))
     expect(result.valid).toBe(true)
     expect(result.compression).toBe(GlueSchemaRegistry.COMPRESSION_ZLIB)
     expect(result.schemaId).toBe('b7912285-527d-42de-88ee-e389a763225f')
@@ -339,7 +437,7 @@ describe('test error cases', () => {
     const binmessage = malformedMessage
     expect.assertions(1)
     try {
-      await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+      await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testavroschema)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       expect(error.message).toMatch('Only header version 3 is supported, received 0')
@@ -349,7 +447,7 @@ describe('test error cases', () => {
     const binmessage = malformedCompression
     expect.assertions(1)
     try {
-      await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+      await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testavroschema)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       expect(error.message).toMatch('Only compression type 0 and 5 are supported, received 1')
