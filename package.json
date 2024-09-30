@@ -29,18 +29,18 @@
   "homepage": "https://github.com/meinestadt/glue-schema-registry#readme",
   "devDependencies": {
     "@jest/globals": "^29.4.1",
-    "@types/node": "^18.11.13",
+    "@types/node": "^20.8.7",
     "@types/uuid": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.49.0",
+    "@typescript-eslint/eslint-plugin": "^6.8.0",
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "jest": "^29.4.1",
     "jest-junit": "^16.0.0",
-    "prettier": "^2.8.3",
+    "prettier": "^3.0.3",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.4"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@aws-sdk/client-glue": "^3.298.0",
