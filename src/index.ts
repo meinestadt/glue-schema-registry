@@ -49,6 +49,8 @@ export type AnalyzeMessageResult = {
    * the error code, if valid is false, otherwise undefined
    */
   error?: ERROR
+  /** the original exception, if available */
+  exception?: unknown
   /**
    * the header version
    */
@@ -272,12 +274,14 @@ export class GlueSchemaRegistry<T> {
       } catch (e) {
         return {
           valid: false,
+          exception: e,
           error: ERROR.INVALID_SCHEMA,
         }
       }
     } catch (e) {
       return {
         valid: false,
+        exception: e,
         error: ERROR.INVALID_SCHEMA_ID,
       }
     }
