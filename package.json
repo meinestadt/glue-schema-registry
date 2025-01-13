@@ -1,6 +1,6 @@
 {
   "name": "@meinestadt.de/glue-schema-registry",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "This is a SerDe library to interact with the AWS Glue Schema Registry. It makes it easy to encode and decode messages with Avro schemas and the AWS' wire format.",
   "main": "src/index.js",
   "scripts": {

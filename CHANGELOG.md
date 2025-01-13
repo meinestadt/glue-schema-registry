@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.0](https://github.com/meinestadt/glue-schema-registry/compare/v2.0.0...v2.1.0) (2025-01-13)
+
+
+### Features
+
+* add exception property to AnalyzeMessageResult for better error handling ([1558699](https://github.com/meinestadt/glue-schema-registry/commit/15586996d47b60c46f76720748e1a2dfd1a3cc1b))
+* use zlib from stdlib ([d130069](https://github.com/meinestadt/glue-schema-registry/commit/d130069fb0943eba83dd4636da652cad11eb2e5c))
+
 ## [2.0.0](https://github.com/meinestadt/glue-schema-registry/compare/v1.4.2...v2.0.0) (2023-03-24)
 
 
