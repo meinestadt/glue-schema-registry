@@ -9,14 +9,6 @@ Apache Avro-encoded messages can be created and consumed using this library. Pro
 
 This library works well with kafkajs (https://kafka.js.org).
 
-## 2023-03-24: Breaking changes
-
-The library has been rewritten to use the AWS SDK v3. This is a breaking change.
-The migration should be relatively easy, but there are some API changes that you need to be aware of.
-
-1) the props parameter of the constructor is now mandatory. The type changed from `Glue.ClientConfiguration` to `GlueClientConfig`.
-2) the props parameter of `updateGlueClient` is now mandatory. The type changed from `Glue.ClientConfiguration` to `GlueClientConfig`.
-3) the return type of `analyzeMessage` has changed. The type of the schema field is now `GetSchemaVersionResponse` from the SDK v3.
 
 ## Getting started
 
@@ -310,3 +302,13 @@ The current supported version is 3. Compression can be 0 (no compression) or 5 (
 - support for Protobuf
 - support for JSON Schema
 
+## Migration from v1 to v2
+
+v1 is deprecated and will not be maintained anymore. Please migrate to v2.
+v1 supports the AWS SDK v2 and is not compatible with the AWS SDK v3. v2 uses the AWS SDK v3.
+
+The migration should be relatively easy, but there are some API changes that you need to be aware of.
+
+1) the props parameter of the constructor is now mandatory. The type changed from `Glue.ClientConfiguration` to `GlueClientConfig`.
+2) the props parameter of `updateGlueClient` is now mandatory. The type changed from `Glue.ClientConfiguration` to `GlueClientConfig`.
+3) the return type of `analyzeMessage` has changed. The type of the schema field is now `GetSchemaVersionResponse` from the SDK v3.
