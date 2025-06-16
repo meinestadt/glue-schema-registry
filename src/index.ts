@@ -40,17 +40,11 @@ export enum ERROR {
   INVALID_SCHEMA = 4,
 }
 
-export type AnalyzeMessageResult = {
+export type GetWireProtocolValuesResult = {
   /**
-   * true if the message is valid
-   */
-  valid: boolean
-  /**
-   * the error code, if valid is false, otherwise undefined
+   * the error code if not valid, otherwise undefined
    */
   error?: ERROR
-  /** the original exception, if available */
-  exception?: unknown
   /**
    * the header version
    */
@@ -63,6 +57,14 @@ export type AnalyzeMessageResult = {
    * the uuid of the schema
    */
   schemaId?: string
+}
+export type AnalyzeMessageResult = GetWireProtocolValuesResult & {
+  /**
+   * true if the message is valid
+   */
+  valid: boolean
+  /** the original exception, if available */
+  exception?: unknown
   /**
    * the glue schema
    */
@@ -230,16 +232,15 @@ export class GlueSchemaRegistry<T> {
   }
 
   /**
-   * Analyze the binary message to determine if it is valid and if so, what schema version it was encoded with.
+   * Analyze the binary message to retrieve Kafka Wire Protocol values
    *
    * @param message - the binary message to analyze
-   * @returns - an object containing the analysis results @see AnalyzeMessageResult
+   * @returns - an object containing the wire protocol values @see GetWireProtocolValuesResult
    */
-  async analyzeMessage(message: Buffer): Promise<AnalyzeMessageResult> {
+  getWireProtocolValues(message: Buffer): GetWireProtocolValuesResult {
     const headerversion = message.readInt8(0)
     if (headerversion !== GlueSchemaRegistry.HEADER_VERSION) {
       return {
-        valid: false,
         error: ERROR.INVALID_HEADER_VERSION,
       }
     }
@@ -249,14 +250,34 @@ export class GlueSchemaRegistry<T> {
       compression !== GlueSchemaRegistry.COMPRESSION_ZLIB
     ) {
       return {
-        valid: false,
         error: ERROR.INVALID_COMPRESSION,
       }
     }
+    return {
+      headerversion,
+      compression,
+      schemaId: uuid.stringify(message, 2),
+    }
+  }
+
+  /**
+   * Analyze the binary message to determine if it is valid and if so, what schema it was encoded with.
+   *
+   * @param message - the binary message to analyze
+   * @returns - an object containing the analysis results @see AnalyzeMessageResult
+   */
+  async analyzeMessage(message: Buffer): Promise<AnalyzeMessageResult> {
+    const { error, schemaId, headerversion, compression } = this.getWireProtocolValues(message)
+
+    if (error) {
+      return { valid: false, error }
+    }
     try {
-      const producerSchemaId = uuid.stringify(message, 2)
+      if (!schemaId) {
+        return { valid: false, error: ERROR.INVALID_SCHEMA_ID }
+      }
       try {
-        const producerschema = await this.loadGlueSchema(producerSchemaId)
+        const producerschema = await this.loadGlueSchema(schemaId)
         if (!producerschema) throw new Error('Schema not found')
         if (producerschema.Status === 'FAILURE') {
           return {
@@ -268,7 +289,7 @@ export class GlueSchemaRegistry<T> {
           valid: true,
           headerversion,
           compression,
-          schemaId: producerSchemaId,
+          schemaId,
           schema: producerschema,
         }
       } catch (e) {
