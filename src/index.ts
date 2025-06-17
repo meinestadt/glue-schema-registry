@@ -355,7 +355,7 @@ export class GlueSchemaRegistry<T> {
     return consumerschema.fromBuffer(await handlecompression(content), resolver)
   }
 
-  async getAvroSchemaForGlueId(id: string) {
+  async getAvroSchemaForGlueId(id: string): Promise<avro.Type> {
     if (this.avroSchemaCache[id]) return this.avroSchemaCache[id]
     const schemastring = (await this.loadGlueSchema(id)).SchemaDefinition
     if (!schemastring) throw new Error('Glue returned undefined schema definition')
