@@ -324,6 +324,32 @@ describe('test analyze message', () => {
   })
 })
 
+describe('test get wire protocol values', () => {
+  const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+    region: 'eu-central-1',
+  })
+  test('should return values and no errors for a valid message', () => {
+    const result = schemaregistry.getWireProtocolValues(Buffer.from(compressedHelloWorld, 'hex'))
+    expect(result).toStrictEqual({
+      compression: GlueSchemaRegistry.COMPRESSION_ZLIB,
+      schemaId: 'b7912285-527d-42de-88ee-e389a763225f',
+      headerversion: GlueSchemaRegistry.HEADER_VERSION,
+    })
+  })
+  test('should return error for invalid header version', () => {
+    const result = schemaregistry.getWireProtocolValues(Buffer.from(malformedMessage, 'hex'))
+    expect(result).toStrictEqual({
+      error: ERROR.INVALID_HEADER_VERSION,
+    })
+  })
+  test('should return error for an invalid compression type', async () => {
+    const result = schemaregistry.getWireProtocolValues(Buffer.from(malformedCompression, 'hex'))
+    expect(result).toStrictEqual({
+      error: ERROR.INVALID_COMPRESSION,
+    })
+  })
+})
+
 describe('test error cases', () => {
   let schemaregistry: GlueSchemaRegistry<TestType>
   beforeAll(async () => {
