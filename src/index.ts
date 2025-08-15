@@ -135,7 +135,6 @@ export class GlueSchemaRegistry<T> {
   private async loadGlueSchema(schemaId: string) {
     const existing = this.runningGlueSchemaLoads.get(schemaId)
     if (existing) return existing
-
     const p = this.limiter.run(() =>
       this.gc.send(
         new gluesdk.GetSchemaVersionCommand({
