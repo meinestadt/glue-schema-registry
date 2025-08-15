@@ -231,6 +231,19 @@ This is particulary useful when credentials need to get updated.
 updateGlueClient(props: GlueClientConfig)
 ```
 
+### Concurrent AWS API requests
+
+By default, only one request to the AWS Glue API is made at a time.
+This helps avoid unnecessary API calls and rate-limit exceptions when a batch of messages is processed in parallel.
+You can override this behavior by passing the maximum number of parallel requests as the second parameter to the constructor:
+
+```typescript
+const registry = new GlueSchemaRegistry<IHelloWorld>("MySchemas", {
+    region: "eu-central-1",
+  }, 3); // 3 parallel requests max
+```
+
+
 ## Examples
 
 ### Nodejs Lambda function consuming a MSK/Kafka stream
