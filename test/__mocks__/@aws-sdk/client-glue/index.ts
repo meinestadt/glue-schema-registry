@@ -14,7 +14,7 @@ type GlueCommandMock<Input, Output> = jest.MockedFunction<(params: Input) => Pro
 const mockedSend = jest.fn().mockImplementation((command: unknown) => {
   return new Promise((resolve) => {
     const delay = Math.floor(Math.random() * 50) + 250 // 50–250 ms
-    setTimeout(() => {      
+    setTimeout(() => {
       resolve(command)
     }, delay)
   })

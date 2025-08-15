@@ -79,9 +79,13 @@ describe('serde with compression', () => {
   let schemaId: string
 
   beforeEach(async () => {
-    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
-      region: 'eu-central-1',
-    }, 1)
+    schemaregistry = new GlueSchemaRegistry<TestType>(
+      'testregistry',
+      {
+        region: 'eu-central-1',
+      },
+      1,
+    )
     GlueClientMock.clear()
   })
 
@@ -162,24 +166,23 @@ describe('serde with compression', () => {
     })
 
     const binmessage = compressedHelloWorld
-    const binmessage2 = "0305a7912285527d42de88eee389a763225f789cd3f248cdc9c95728484d4c4e4d2bcd5128cf2fca4951040059ba07ed";
+    const binmessage2 =
+      '0305a7912285527d42de88eee389a763225f789cd3f248cdc9c95728484d4c4e4d2bcd5128cf2fca4951040059ba07ed'
 
     // create 100 promises to decode the same message in parallel
     const messages = Array.from({ length: 100 }, (_, i) => (i % 2 === 1 ? binmessage2 : binmessage))
     const promises = messages.map((m) => schemaregistry.decode(Buffer.from(m, 'hex'), testschema))
 
-    const results = await Promise.all(promises);
-    expect(results.length).toBe(100);
+    const results = await Promise.all(promises)
+    expect(results.length).toBe(100)
     // expect that all results are the same
     results.forEach((result, i) => {
       const expected = i % 2 === 1 ? 'Hello peaceful world!' : 'Hello world!'
       expect(result.demo).toBe(expected)
-    });
+    })
     expect(GlueClientMock.GetSchemaVersionCommand).toBeCalledTimes(2)
-    expect(GlueClientMock.send).toBeCalledTimes(2)    
+    expect(GlueClientMock.send).toBeCalledTimes(2)
   })
-
-
 })
 
 describe('serde with schema evolution', () => {
