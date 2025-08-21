@@ -315,6 +315,14 @@ The current supported version is 3. Compression can be 0 (no compression) or 5 (
 - support for Protobuf
 - support for JSON Schema
 
+## Changes in v3
+
+In version 3, the number of parallel calls to the AWS Glue API is actively controlled. This prevents multiple identical calls from running at the same time, which could otherwise result in rate limit exceeded exceptions.
+This is particularly useful when processing a batch of messages in parallel, as it avoids a large number of simultaneous API calls while the schema cache is still cold.
+
+There are no interface changes in v3, which means that in most cases v2 can simply be replaced by v3 without requiring any further modifications.
+However, since the changes may significantly affect the runtime behavior of applications — and could be breaking in rare cases — v3 is released as a new major version.
+
 ## Migration from v1 to v2
 
 v1 is deprecated and will not be maintained anymore. Please migrate to v2.
