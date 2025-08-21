@@ -113,7 +113,7 @@ export class GlueSchemaRegistry<T> {
    *
    * @param registryName - name of the Glue registry you want to use
    * @param props - optional AWS properties that are used when constructing the Glue object from the AWS SDK
-   * @param maxConcurrentGlueCalls optional maximum number of concurrent calls to the Glue service. Defaults to 1.
+   * @param maxConcurrentGlueCalls - optional maximum number of concurrent calls to the Glue service. Defaults to 1.
    */
   constructor(registryName: string, props: gluesdk.GlueClientConfig, maxConcurrentGlueCalls = 1) {
     this.gc = new gluesdk.GlueClient(props)
