@@ -152,7 +152,9 @@ describe('serde with compression', () => {
     expect(object.demo).toBe('Hello world!')
   })
 
-  test('deserialization of 100 messages with 3 schemas in parallel', async () => {
+  test('deserialization of 100 messages with 2 schemas in parallel', async () => {
+    // even though we test with two different schema ids in the test messages, we can always return the same schema as the schemas are identical, dispite the ID.
+    // the two different IDs are needed for testing the caching behavior
     GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
       VersionNumber: 1,
       Status: 'AVAILABLE',
