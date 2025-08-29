@@ -69,6 +69,26 @@ export type AnalyzeMessageResult = {
   schema?: gluesdk.GetSchemaVersionResponse
 }
 
+class PromiseDispatcher {
+  private active = 0
+  private queue: Array<() => void> = []
+  constructor(private readonly limit: number) {}
+
+  async run<T>(fn: () => Promise<T>): Promise<T> {
+    if (this.active >= this.limit) {
+      await new Promise<void>((resolve) => this.queue.push(resolve))
+    }
+    this.active++
+    try {
+      return await fn()
+    } finally {
+      this.active--
+      const next = this.queue.shift()
+      if (next) next()
+    }
+  }
+}
+
 export class GlueSchemaRegistry<T> {
   /*
   This class aims to be compatible with the java serde implementation from AWS.
@@ -77,6 +97,7 @@ export class GlueSchemaRegistry<T> {
   */
   private gc: gluesdk.GlueClient
   public readonly registryName: string
+
   private glueSchemaIdCache: {
     [hash: string]: string
   }
@@ -84,17 +105,22 @@ export class GlueSchemaRegistry<T> {
     [key: string]: avro.Type
   }
 
+  private runningGlueSchemaLoads = new Map<string, Promise<gluesdk.GetSchemaVersionResponse>>()
+  private limiter: PromiseDispatcher
+
   /**
    * Constructs a GlueSchemaRegistry
    *
    * @param registryName - name of the Glue registry you want to use
    * @param props - optional AWS properties that are used when constructing the Glue object from the AWS SDK
+   * @param maxConcurrentGlueCalls - optional maximum number of concurrent calls to the Glue service. Defaults to 1.
    */
-  constructor(registryName: string, props: gluesdk.GlueClientConfig) {
+  constructor(registryName: string, props: gluesdk.GlueClientConfig, maxConcurrentGlueCalls = 1) {
     this.gc = new gluesdk.GlueClient(props)
     this.registryName = registryName
     this.glueSchemaIdCache = {}
     this.avroSchemaCache = {}
+    this.limiter = new PromiseDispatcher(Math.max(1, maxConcurrentGlueCalls))
   }
 
   /**
@@ -107,34 +133,37 @@ export class GlueSchemaRegistry<T> {
   }
 
   private async loadGlueSchema(schemaId: string) {
-    const existingschema = await this.gc.send(
-      new gluesdk.GetSchemaVersionCommand({
-        SchemaVersionId: schemaId,
-      }),
+    const existing = this.runningGlueSchemaLoads.get(schemaId)
+    if (existing) return existing
+    const p = this.limiter.run(() =>
+      this.gc.send(
+        new gluesdk.GetSchemaVersionCommand({
+          SchemaVersionId: schemaId,
+        }),
+      ),
     )
-    return existingschema
+
+    this.runningGlueSchemaLoads.set(schemaId, p)
+
+    try {
+      const res = await p
+      return res
+    } finally {
+      this.runningGlueSchemaLoads.delete(schemaId)
+    }
   }
 
-  /**
-   * Creates a new schema in the AWS Glue Schema Registry.
-   * Note: do not use createSchema if you want to create a new version of an existing schema.
-   * Instead use register().
-   *
-   * @param props - the details about the schema
-   * @throws if the schema already exists
-   * @throws if the Glue compatibility check fails
-   */
   public async createSchema(props: CreateSchemaProps) {
-    const res = await this.gc.send(
-      new gluesdk.CreateSchemaCommand({
-        DataFormat: props.type,
-        Compatibility: props.compatibility,
-        SchemaName: props.schemaName,
-        SchemaDefinition: props.schema,
-        RegistryId: {
-          RegistryName: this.registryName,
-        },
-      }),
+    const res = await this.limiter.run(() =>
+      this.gc.send(
+        new gluesdk.CreateSchemaCommand({
+          DataFormat: props.type,
+          Compatibility: props.compatibility,
+          SchemaName: props.schemaName,
+          SchemaDefinition: props.schema,
+          RegistryId: { RegistryName: this.registryName },
+        }),
+      ),
     )
     if (res.SchemaVersionStatus === 'FAILURE') throw new Error('Schema registration failure')
     return res.SchemaVersionId
@@ -347,12 +376,9 @@ export class GlueSchemaRegistry<T> {
     const idasbytes = uuid.parse(id)
     return new Uint8Array(idasbytes)
   }
-
   private getResolver(producerschema: avro.Type, consumerschema: avro.Type) {
-    const resolver = consumerschema.createResolver(producerschema)
-    return resolver
+    return consumerschema.createResolver(producerschema)
   }
-
   private static initByteBuffer(value: number) {
     return Buffer.from([value])
   }
