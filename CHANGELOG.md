@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0](https://github.com/meinestadt/glue-schema-registry/compare/v2.1.0...v3.0.0) (2025-08-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* throttle glue requests ([#574](https://github.com/meinestadt/glue-schema-registry/issues/574))
+
+### Features
+
+* throttle glue requests ([#574](https://github.com/meinestadt/glue-schema-registry/issues/574)) ([3299c61](https://github.com/meinestadt/glue-schema-registry/commit/3299c61c9a14048c911de20d48d0dbd9716adbb6))
+
 ## [2.1.0](https://github.com/meinestadt/glue-schema-registry/compare/v2.0.0...v2.1.0) (2025-01-13)
 
 
