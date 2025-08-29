@@ -70,7 +70,7 @@ describe('schema management', () => {
       compatibility: SchemaCompatibilityType.BACKWARD,
       type: SchemaType.AVRO,
     })
-    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -108,7 +108,7 @@ describe('serde with compression', () => {
       demo: 'Hello world!',
     })
     const binmessage = bindata.toString('hex')
-    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(binmessage).toBe(compressedHelloWorld)
   })
 
@@ -129,7 +129,7 @@ describe('serde with compression', () => {
     })
     const binmessage = compressedHelloWorld
     const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
-    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
   })
 
@@ -147,8 +147,8 @@ describe('serde with compression', () => {
     })
     const binmessage = compressedHelloWorld
     const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
-    expect(GlueClientMock.GetSchemaVersionCommand).toBeCalledTimes(1)
-    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(GlueClientMock.GetSchemaVersionCommand).toHaveBeenCalledTimes(1)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
   })
 
@@ -182,8 +182,8 @@ describe('serde with compression', () => {
       const expected = i % 2 === 1 ? 'Hello peaceful world!' : 'Hello world!'
       expect(result.demo).toBe(expected)
     })
-    expect(GlueClientMock.GetSchemaVersionCommand).toBeCalledTimes(2)
-    expect(GlueClientMock.send).toBeCalledTimes(2)
+    expect(GlueClientMock.GetSchemaVersionCommand).toHaveBeenCalledTimes(2)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -215,7 +215,7 @@ describe('serde with schema evolution', () => {
     })
     const binmessage = compressedHelloWorld
     const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
-    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
     expect(schemaId).toBe('b7912285-527d-42de-88ee-e389a763225f')
     expect(object.v2demo).toBe('Meinestadt')
@@ -237,7 +237,7 @@ describe('serde with schema evolution', () => {
     const binmessage = compressedHelloWorld
     const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
     // expect to have no calls to the schema registry as the schema should be cached from the previos test
-    expect(GlueClientMock.send).toBeCalledTimes(0)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(0)
     expect(object.demo).toBe('Hello world!')
     expect(object.v2demo).toBe('Meinestadt')
   })
@@ -281,8 +281,8 @@ describe('serde without compression', () => {
     )
     const binmessage = bindata.toString('hex')
     // expect that mockRegisterSchemaVersion got called only once, otherwise the cache wouldn't work
-    expect(GlueClientMock.RegisterSchemaVersionCommand).toBeCalledTimes(1)
-    expect(GlueClientMock.send).toBeCalledTimes(1)
+    expect(GlueClientMock.RegisterSchemaVersionCommand).toHaveBeenCalledTimes(1)
+    expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(binmessage).toBe(uncompressedHelloWorld)
   })
 
@@ -295,7 +295,7 @@ describe('serde without compression', () => {
     const binmessage = uncompressedHelloWorld
     const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
     // expect that mockRegisterSchemaVersion was not called, otherwise the cache wouldn't work
-    expect(GlueClientMock.RegisterSchemaVersionCommand).toBeCalledTimes(0)
+    expect(GlueClientMock.RegisterSchemaVersionCommand).toHaveBeenCalledTimes(0)
     expect(object.demo).toBe('Hello world!')
   })
 })
