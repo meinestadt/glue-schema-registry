@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.1](https://github.com/meinestadt/glue-schema-registry/compare/v3.0.0...v3.0.1) (2025-10-14)
+
+
+### Bug Fixes
+
+* add missing jsdoc for createSchema ([45b73e1](https://github.com/meinestadt/glue-schema-registry/commit/45b73e12230219bd332218e59a09212eaa7d7840))
+* fix pipeline permissions ([7ed5d20](https://github.com/meinestadt/glue-schema-registry/commit/7ed5d20f8df76cae240c1e9b55d2a22b8fe2d84f))
+
 ## [3.0.0](https://github.com/meinestadt/glue-schema-registry/compare/v2.1.0...v3.0.0) (2025-08-29)
 
 
