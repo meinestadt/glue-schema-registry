@@ -128,7 +128,7 @@ export class GlueSchemaRegistry<T> {
    *
    * @param props settings for the AWS Glue client
    */
-  public updateGlueClient(props: gluesdk.GlueClientConfig) {
+  updateGlueClient(props: gluesdk.GlueClientConfig) {
     this.gc = new gluesdk.GlueClient(props)
   }
 
@@ -153,7 +153,15 @@ export class GlueSchemaRegistry<T> {
     }
   }
 
-  public async createSchema(props: CreateSchemaProps) {
+  /**
+   * 
+   * Creates a new schema in the glue schema registry.
+   *
+   * Throws if a SchemaVersionStatus in the response equals 'FAILURE'.
+   * @param props
+   * @returns the id of the created schema version
+   */
+  async createSchema(props: CreateSchemaProps) {
     const res = await this.limiter.run(() =>
       this.gc.send(
         new gluesdk.CreateSchemaCommand({
