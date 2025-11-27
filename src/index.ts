@@ -89,7 +89,7 @@ class PromiseDispatcher {
   }
 }
 
-export class GlueSchemaRegistry<T> {
+export class GlueSchemaRegistry {
   /*
   This class aims to be compatible with the java serde implementation from AWS.
   https://github.com/awslabs/aws-glue-schema-registry/blob/master/serializer-deserializer/src/main/java/com/amazonaws/services/schemaregistry/serializers/SerializationDataEncoder.java
@@ -154,7 +154,7 @@ export class GlueSchemaRegistry<T> {
   }
 
   /**
-   * 
+   *
    * Creates a new schema in the glue schema registry.
    *
    * Throws if a SchemaVersionStatus in the response equals 'FAILURE'.
@@ -232,7 +232,7 @@ export class GlueSchemaRegistry<T> {
    * @param props - optional encoding options
    * @returns - a Buffer containing the binary message
    */
-  async encode(glueSchemaId: string, object: T, props?: EncodeProps) {
+  async encode<T>(glueSchemaId: string, object: T, props?: EncodeProps) {
     const ZLIB_COMPRESS_FUNC = (buf: Buffer): Promise<Buffer> => {
       return new Promise((resolve, reject) => {
         zlib.deflate(buf, (err, data) => {
@@ -331,7 +331,7 @@ export class GlueSchemaRegistry<T> {
    * @param consumerschema - The Avro schema that should be used to decode the message
    * @returns - the deserialized message as object
    */
-  async decode(message: Buffer, consumerschema: avro.Type): Promise<T> {
+  async decode<T>(message: Buffer, consumerschema: avro.Type): Promise<T> {
     const headerversion = message.readInt8(0)
     const compression = message.readInt8(1)
     if (headerversion !== GlueSchemaRegistry.HEADER_VERSION) {

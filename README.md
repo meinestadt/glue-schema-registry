@@ -37,7 +37,7 @@ const schema = avro.Type.forSchema({
     ]
 });
 
-const registry = new msglue.GlueSchemaRegistry<SCHEMATYPE>("<GLUE REGISTRY NAME>", {
+const registry = new msglue.GlueSchemaRegistry("<GLUE REGISTRY NAME>", {
     region: "<AWS_REGION>",
 });
 
@@ -103,7 +103,8 @@ If the schemas are not compatible an exception is thrown.
 
 ### Type parameter
 
-You can set the type of the object that you want to encode, and that you receive when you decode a message, as type parameter when you create the instance.
+You can set the payload type per call instead of per registry instance. This allows a single
+`GlueSchemaRegistry` to handle multiple schemas in the same process.
 
 For example:
 ```typescript
@@ -113,12 +114,15 @@ interface Address {
   city: string;
 }
 
-const registry = new msglue.GlueSchemaRegistry<Address>("<GLUE REGISTRY NAME>", {
+const registry = new msglue.GlueSchemaRegistry("<GLUE REGISTRY NAME>", {
     region: "<AWS_REGION>",
 });
+
+const encoded = await registry.encode<Address>(schemaId, addressPayload);
+const decoded = await registry.decode<Address>(message.value, addressSchema);
 ```
 
-The constructor takes an GlueClientConfig object as parameter.
+The constructor takes a GlueClientConfig object as parameter.
 
 ### Create a new schema
 
@@ -155,7 +159,7 @@ const schemaId = await registry.register({
 Encode the object with a given glueSchemaId and returns a Buffer containing the binary data.
 
 ```typescript
-async encode(glueSchemaId: string, object: T, props?: EncodeProps): Promise<Buffer>
+async encode<T>(glueSchemaId: string, object: T, props?: EncodeProps): Promise<Buffer>
 ```
 
 Optional properties:
@@ -179,7 +183,7 @@ if producer and consumer schema are not compatible.
 Decodes both uncompressed and gzip compressed messages.
 
 ```typescript
-async decode(message: Buffer, consumerschema: avro.Type): Promise<T>
+async decode<T>(message: Buffer, consumerschema: avro.Type): Promise<T>
 ```
 
 ### Get meta data for a message
@@ -238,7 +242,7 @@ This helps avoid unnecessary API calls and rate-limit exceptions when a batch of
 You can override this behavior by passing the maximum number of parallel requests as the second parameter to the constructor:
 
 ```typescript
-const registry = new GlueSchemaRegistry<IHelloWorld>("MySchemas", {
+const registry = new GlueSchemaRegistry("MySchemas", {
     region: "eu-central-1",
   }, 3); // 3 parallel requests max
 ```
@@ -279,7 +283,7 @@ export const handler = async (event: any) => {
   // create the registry object
   // Note: the lambda function must have the permission to read schemas and
   // schema versions from AWS Glue
-  const registry = new GlueSchemaRegistry<IHelloWorld>("MySchemas", {
+  const registry = new GlueSchemaRegistry("MySchemas", {
     region: "eu-central-1",
   });
   // Iterate through keys
@@ -291,7 +295,7 @@ export const handler = async (event: any) => {
       // base64 decode the incoming message
       const msg = Buffer.from(record.value, "base64");
       // decode the avro encoded message
-      return registry.decode(msg, schema).then((dataset) => {
+      return registry.decode<IHelloWorld>(msg, schema).then((dataset) => {
         // print the deserialized object to the console
         console.log(dataset);
       });
@@ -314,6 +318,11 @@ The current supported version is 3. Compression can be 0 (no compression) or 5 (
 
 - support for Protobuf
 - support for JSON Schema
+
+## Changes in v4
+
+- `GlueSchemaRegistry` is no longer generic at the class level; pass your payload type per call via `encode<T>` / `decode<T>` so one registry instance can handle multiple schemas.
+- Remove `<T>` from constructor calls; keep using type parameters on `encode`/`decode` when you want typed payloads.
 
 ## Changes in v3
 

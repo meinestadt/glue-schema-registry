@@ -50,10 +50,10 @@ const malformedMessage = '0000b7912285527d42de88eee389a763225f1848656c6c6f20776f
 const malformedCompression = '0301b7912285527d42de88eee389a763225f1848656c6c6f20776f726c6421'
 
 describe('schema management', () => {
-  let schemaregistry: GlueSchemaRegistry<TestType>
+  let schemaregistry: GlueSchemaRegistry
   beforeAll(async () => {
     GlueClientMock.GlueClient.mockClear()
-    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
+    schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
   })
@@ -75,11 +75,11 @@ describe('schema management', () => {
 })
 
 describe('serde with compression', () => {
-  let schemaregistry: GlueSchemaRegistry<TestType>
+  let schemaregistry: GlueSchemaRegistry
   let schemaId: string
 
   beforeEach(async () => {
-    schemaregistry = new GlueSchemaRegistry<TestType>(
+    schemaregistry = new GlueSchemaRegistry(
       'testregistry',
       {
         region: 'eu-central-1',
@@ -128,7 +128,7 @@ describe('serde with compression', () => {
       type: SchemaType.AVRO,
     })
     const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+    const object = await schemaregistry.decode<TestType>(Buffer.from(binmessage, 'hex'), testschema)
     expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
   })
@@ -146,7 +146,7 @@ describe('serde with compression', () => {
       SchemaDefinition: JSON.stringify(testschema),
     })
     const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+    const object = await schemaregistry.decode<TestType>(Buffer.from(binmessage, 'hex'), testschema)
     expect(GlueClientMock.GetSchemaVersionCommand).toHaveBeenCalledTimes(1)
     expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
@@ -173,7 +173,9 @@ describe('serde with compression', () => {
 
     // create 100 promises to decode the same message in parallel
     const messages = Array.from({ length: 100 }, (_, i) => (i % 2 === 1 ? binmessage2 : binmessage))
-    const promises = messages.map((m) => schemaregistry.decode(Buffer.from(m, 'hex'), testschema))
+    const promises = messages.map((m) =>
+      schemaregistry.decode<TestType>(Buffer.from(m, 'hex'), testschema),
+    )
 
     const results = await Promise.all(promises)
     expect(results.length).toBe(100)
@@ -188,9 +190,9 @@ describe('serde with compression', () => {
 })
 
 describe('serde with schema evolution', () => {
-  let schemaregistry: GlueSchemaRegistry<TestTypeV2>
+  let schemaregistry: GlueSchemaRegistry
   beforeAll(async () => {
-    schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+    schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
     GlueClientMock.reset()
@@ -214,7 +216,10 @@ describe('serde with schema evolution', () => {
       type: SchemaType.AVRO,
     })
     const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
+    const object = await schemaregistry.decode<TestTypeV2>(
+      Buffer.from(binmessage, 'hex'),
+      testschemaV2,
+    )
     expect(GlueClientMock.send).toHaveBeenCalledTimes(1)
     expect(object.demo).toBe('Hello world!')
     expect(schemaId).toBe('b7912285-527d-42de-88ee-e389a763225f')
@@ -235,7 +240,10 @@ describe('serde with schema evolution', () => {
     })
 
     const binmessage = compressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschemaV2)
+    const object = await schemaregistry.decode<TestTypeV2>(
+      Buffer.from(binmessage, 'hex'),
+      testschemaV2,
+    )
     // expect to have no calls to the schema registry as the schema should be cached from the previos test
     expect(GlueClientMock.send).toHaveBeenCalledTimes(0)
     expect(object.demo).toBe('Hello world!')
@@ -244,10 +252,10 @@ describe('serde with schema evolution', () => {
 })
 
 describe('serde without compression', () => {
-  let schemaregistry: GlueSchemaRegistry<TestType>
+  let schemaregistry: GlueSchemaRegistry
 
   beforeAll(async () => {
-    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
+    schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
     GlueClientMock.reset()
@@ -293,7 +301,7 @@ describe('serde without compression', () => {
       type: SchemaType.AVRO,
     })
     const binmessage = uncompressedHelloWorld
-    const object = await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+    const object = await schemaregistry.decode<TestType>(Buffer.from(binmessage, 'hex'), testschema)
     // expect that mockRegisterSchemaVersion was not called, otherwise the cache wouldn't work
     expect(GlueClientMock.RegisterSchemaVersionCommand).toHaveBeenCalledTimes(0)
     expect(object.demo).toBe('Hello world!')
@@ -316,7 +324,7 @@ describe('test analyze message', () => {
     })
   })
   test('analyze should succeed for a valid message', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+    const schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
     const result = await schemaregistry.analyzeMessage(Buffer.from(compressedHelloWorld, 'hex'))
@@ -328,7 +336,7 @@ describe('test analyze message', () => {
     )
   })
   test('analyze should not succeed for an invalid message', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+    const schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
     const result = await schemaregistry.analyzeMessage(Buffer.from(malformedMessage, 'hex'))
@@ -336,7 +344,7 @@ describe('test analyze message', () => {
     expect(result.error).toBe(ERROR.INVALID_HEADER_VERSION)
   })
   test('analyze should not succeed for an invalid compression type', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+    const schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
     const result = await schemaregistry.analyzeMessage(Buffer.from(malformedCompression, 'hex'))
@@ -344,7 +352,7 @@ describe('test analyze message', () => {
     expect(result.error).toBe(ERROR.INVALID_COMPRESSION)
   })
   test('analyze should throw an error if the schema does not exist', async () => {
-    const schemaregistry = new GlueSchemaRegistry<TestTypeV2>('testregistry', {
+    const schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
     GlueClientMock.GetSchemaVersionCommand.mockResolvedValue({
@@ -363,12 +371,12 @@ describe('test analyze message', () => {
 })
 
 describe('test error cases', () => {
-  let schemaregistry: GlueSchemaRegistry<TestType>
+  let schemaregistry: GlueSchemaRegistry
   beforeAll(async () => {
     GlueClientMock.reset()
   })
   beforeEach(async () => {
-    schemaregistry = new GlueSchemaRegistry<TestType>('testregistry', {
+    schemaregistry = new GlueSchemaRegistry('testregistry', {
       region: 'eu-central-1',
     })
     GlueClientMock.clear()
@@ -377,7 +385,7 @@ describe('test error cases', () => {
     const binmessage = malformedMessage
     expect.assertions(1)
     try {
-      await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+      await schemaregistry.decode<TestType>(Buffer.from(binmessage, 'hex'), testschema)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       expect(error.message).toMatch('Only header version 3 is supported, received 0')
@@ -387,7 +395,7 @@ describe('test error cases', () => {
     const binmessage = malformedCompression
     expect.assertions(1)
     try {
-      await schemaregistry.decode(Buffer.from(binmessage, 'hex'), testschema)
+      await schemaregistry.decode<TestType>(Buffer.from(binmessage, 'hex'), testschema)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       expect(error.message).toMatch('Only compression type 0 and 5 are supported, received 1')
