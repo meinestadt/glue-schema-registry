@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/meinestadt/glue-schema-registry/compare/v3.0.1...v4.0.0) (2025-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* make GlueSchemaRegistry multi-schema by moving generics to encode/decode
+
+### Features
+
+* make GlueSchemaRegistry multi-schema by moving generics to encode/decode ([02ce53e](https://github.com/meinestadt/glue-schema-registry/commit/02ce53ed302d06216121f4eb32311e490d27e9ad))
+
 ## [3.0.1](https://github.com/meinestadt/glue-schema-registry/compare/v3.0.0...v3.0.1) (2025-10-14)
 
 
