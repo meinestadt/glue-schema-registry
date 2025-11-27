@@ -5,6 +5,7 @@
     "lib": [
       "es2019", "es2020.promise", "es2020.bigint", "es2020.string"
     ],
+    "outDir": "./dist",
     "declaration": true,
     "strict": true,
     "noImplicitAny": true,
@@ -26,11 +27,12 @@
     "typeRoots": [
       "./node_modules/@types"
     ]
-  },
+  },  
   "exclude": [
     "node_modules",
     "cdk.out",
     "test",
+    "dist",
     "jest.config.ts"
   ]
 }
